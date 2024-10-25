@@ -1,0 +1,31 @@
+﻿@if (!User.Identity.IsAuthenticated)
+{
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link" href="@Url.Action("Login", "Accounts")">Đăng nhập</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="@Url.Action("Register", "Accounts")">Đăng ký</a>
+        </li>
+    </ul>
+}
+else
+{
+    <div class="btn-group">
+        <button type="button" class="btn" data-bs-toggle="dropdown" aria-expanded="false">
+            Cá nhân
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end wrap-none">
+            <li>
+                <a class="nav-link" href="@Url.Action("InfoCustomer", "Accounts")">Thông tin cá nhân</a>
+            </li>
+            <li>
+                @using (Html.BeginForm("Logout", "Accounts", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <button class="btn nav-link" type="submit">Đăng xuất</button>
+                }
+            </li>
+        </ul>
+    </div>
+}

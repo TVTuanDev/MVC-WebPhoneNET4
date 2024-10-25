@@ -1,0 +1,34 @@
+﻿@model LoginDTO
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<h1>Đăng nhập</h1>
+<hr />
+<div class="row">
+    @using (Html.BeginForm("Login", "Accounts", FormMethod.Post, new { @class = "col-md-4" }))
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.Email)
+            @Html.TextBoxFor(m => m.Email, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+        </div>
+        <div class="form-group">
+            @Html.LabelFor(m => m.Password)
+            @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger small" })
+        </div>
+        <div class="form-check">
+            @Html.CheckBoxFor(m => m.RememberMe, new { @class = "form-check-input", id = "remember" })
+            @Html.LabelFor(m => m.RememberMe, new { @class = "form-check-label", @for = "remember" })
+            <div class="float-end">
+                @Html.ActionLink("Quên mật khẩu?", "ForgotPassword", "Accounts")
+            </div>
+        </div>
+        <div class="form-group mt-3">
+            <button type="submit" class="btn btn-success">Đăng nhập</button>
+        </div>
+    }
+</div>
