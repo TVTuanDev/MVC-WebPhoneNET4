@@ -303,6 +303,9 @@
     <Compile Include="Models\Products\CateProductDTO.cs" />
     <Compile Include="Models\Products\ProductDTO.cs" />
     <Compile Include="Models\RandomGenerator.cs" />
+    <Compile Include="Models\Users\CustomerDTO.cs" />
+    <Compile Include="Models\Users\UserDTO.cs" />
+    <Compile Include="Models\Users\UserRoleDTO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\SendMailService.cs" />
   </ItemGroup>
@@ -386,10 +389,14 @@
     <Content Include="Views\Products\Create.cshtml" />
     <Content Include="Views\Products\Edit.cshtml" />
     <Content Include="Views\Products\Delete.cshtml" />
+    <Content Include="Views\Users\Index.cshtml" />
+    <Content Include="Views\Users\Details.cshtml" />
+    <Content Include="Views\Users\Create.cshtml" />
+    <Content Include="Views\Users\Edit.cshtml" />
+    <Content Include="Views\Users\Delete.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Views\Users\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />

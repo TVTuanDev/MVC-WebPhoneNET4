@@ -1,0 +1,52 @@
+﻿@model User
+
+@{
+    ViewData["Title"] = "Xóa tài khoản";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<h3>Bạn có chắc muốn xóa không?</h3>
+<div>
+    <h4>User</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">Họ tên</dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.UserName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Email)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Email)
+        </dd>
+        <dt class="col-sm-2">Số điện thoại</dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.PhoneNumber)
+        </dd>
+        <dt class="col-sm-2">Địa chỉ</dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Address)
+        </dd>
+        <dt class="col-sm-2">Trạng thái</dt>
+        <dd class="col-sm-10">
+            @(Model.EmailConfirmed ? "Đã xác thực" : "Chưa xác thực")
+        </dd>
+        <dt class="col-sm-2">Ngày tạo</dt>
+        <dd class="col-sm-10">
+            @Model.CreateAt.ToString("dd/MM/yyyy HH/mm/ss")
+        </dd>
+        <dt class="col-sm-2">Ngày cập nhật</dt>
+        <dd class="col-sm-10">
+            @(Model.UpdateAt == null ? "" : Model.UpdateAt?.ToString("dd/MM/yyyy HH:mm:ss"))
+        </dd>
+    </dl>
+
+    <form action="@Url.Action("Delete")" method="post">
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.Id)
+        <input type="submit" value="Xóa" class="btn btn-danger" /> |
+        <a href="@Url.Action("Index")">Quay lại</a>
+    </form>
+</div>

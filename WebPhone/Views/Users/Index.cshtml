@@ -1,0 +1,121 @@
+﻿@model IEnumerable<User>
+
+@{
+    ViewData["Title"] = "Danh sách tài khoản";
+    int count = 0;
+    int.TryParse(Context.Request.QueryString["page"], out int currentPage);
+    currentPage = currentPage < 1 ? 1 : currentPage;
+    int.TryParse(ViewBag.CountPage.ToString(), out int countPage);
+    currentPage = currentPage > countPage ? countPage : currentPage;
+    string q = Context.Request.QueryString["q"];
+    int startPage = 1;
+    int endPage = 10;
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>
+    <a href="@Url.Action("Create")">Tạo mới</a>
+</p>
+
+<div class="row">
+    <form class="col-md-4 search" action="@Url.Action("Index")" method="post">
+        <div class="input-group rounded">
+            <input type="hidden" name="Page" value="@currentPage" />
+            <input type="search" name="Email" value="@q" class="form-control rounded" placeholder="Search..." aria-label="Search" aria-describedby="search-addon" />
+            <button class="btn btn-secondary ms-3" type="submit">Search</button>
+        </div>
+    </form>
+</div>
+
+<nav aria-label="Page navigation example">
+    <ul class="pagination float-end me-5">
+        <li class="page-item">
+            <a class="page-link" href="@Url.Action("Index", new { page = 1, q = q })" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        @if (currentPage > 5)
+        {
+            startPage = currentPage - 5;
+            endPage = startPage + 9;
+        }
+        @if (currentPage > Math.Abs(countPage - 5))
+        {
+            startPage = countPage - 9;
+            startPage = startPage > 0 ? startPage : 1;
+            endPage = countPage;
+        }
+        @for (int i = startPage; i <= countPage && i <= endPage; i++)
+        {
+            <li class="page-item @(i == currentPage ? "active" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = i, q })">@i</a>
+            </li>
+        }
+        <li class="page-item">
+            <a class="page-link" href="@Url.Action("Index", new { page = countPage, q })" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th>Trạng thái</th>
+            <th>Ngày tạo</th>
+            <th>Ngày cập nhật</th>
+            <th class="text-center">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@(++count)</td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.UserName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Email)
+                </td>
+                <td>@(item.EmailConfirmed ? "Đã xác thực" : "Chưa xác thực")</td>
+                <td>
+                    @item.CreateAt.ToString("dd/MM/yyyy HH:mm:ss")
+                </td>
+                <td>
+                    @(item.UpdateAt == null ? "" : item.UpdateAt?.ToString("dd/MM/yyyy HH:mm:ss"))
+                </td>
+                <td class="text-center">
+                    @Html.ActionLink("Sửa", "Edit", new { id = item.Id }) |
+                    @Html.ActionLink("Xem", "Details", new { id = item.Id }) |
+                    @Html.ActionLink("Xóa", "Delete", new { id = item.Id }) |
+                    @Html.ActionLink("Phân quyền", "UserAuthorization", new { id = item.Id })
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('form.search').on('submit', function (event) {
+                event.preventDefault();
+                let urlAction = "@Url.Action("Index", "Users")";
+                let searchValue = $(this).find("input[name=Email]").val();
+                let url = `${urlAction}?q=${searchValue}`;
+
+                window.location.href = url;
+            });
+
+            $('.tooltips .tooltip-text').click(function () {
+                console.log($(this).closest('td'));
+            });
+        });
+    </script>
+}
