@@ -16,7 +16,6 @@ namespace WebPhone.EF
         [Required]
         [StringLength(500)]
         public string ProductName { get; set; }
-        public string Avatar { get; set; }
         public string Description { get; set; }
         public int Price { get; set; }
         public int? Discount { get; set; }

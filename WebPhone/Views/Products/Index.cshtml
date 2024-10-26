@@ -1,0 +1,123 @@
+﻿@model IEnumerable<Product>
+
+@{
+    ViewData["Title"] = "Sản phẩm";
+    int count = 0;
+    int.TryParse(Context.Request.QueryString["page"], out int currentPage);
+    currentPage = currentPage < 1 ? 1 : currentPage;
+    int.TryParse(ViewBag.CountPage.ToString(), out int countPage);
+    currentPage = currentPage > countPage ? countPage : currentPage;
+    string nameProduct = Context.Request.QueryString["nameProduct"];
+    int startPage = 1;
+    int endPage = 10;
+}
+
+<h1>Sản phẩm</h1>
+
+<p>
+    <a href="@Url.Action("Create")">Tạo mới</a>
+</p>
+<div class="row">
+    <form class="col-md-4 search" action="@Url.Action("Index")" method="post">
+        <div class="input-group rounded">
+            <input type="hidden" name="Page" value="@currentPage" />
+            <input type="search" name="ProductName" value="@nameProduct" class="form-control rounded" placeholder="Search..." aria-label="Search" aria-describedby="search-addon" />
+            <button class="btn btn-secondary ms-3" type="submit">Search</button>
+        </div>
+    </form>
+</div>
+
+<nav aria-label="Page navigation example">
+    <ul class="pagination float-end me-5">
+        <li class="page-item">
+            <a class="page-link" href="@Url.Action("Index", new { page = 1, nameProduct = nameProduct })" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        @if (currentPage > 5)
+        {
+            startPage = currentPage - 5;
+            endPage = startPage + 9;
+        }
+        @if (currentPage > Math.Abs(countPage - 5))
+        {
+            startPage = countPage - 9;
+            startPage = startPage > 0 ? startPage : 1;
+            endPage = countPage;
+        }
+        @for (int i = startPage; i <= countPage && i <= endPage; i++)
+        {
+            <li class="page-item @(i == currentPage ? "active" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = i, nameProduct = nameProduct })">@i</a>
+            </li>
+        }
+        <li class="page-item">
+            <a class="page-link" href="@Url.Action("Index", new { page = countPage, nameProduct = nameProduct })" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Ảnh đại diện</th>
+            <th>Tên sản phẩm</th>
+            <th class="text-end">Đơn giá</th>
+            <th class="text-end">Giảm giá</th>
+            <th class="text-center">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr class="">
+                <td>@(++count)</td>
+                <td>
+                    <img src="https://picsum.photos/100/50?random=@count" alt="Avatar" style="width:80px; height:auto;" />
+                    @* <img src="~/images/tour-singapore-3n2d-gardens-by-the-bay-sentosa-cong-vien-jurassic-mile-tu-hcm-65782270868d7-848x477.jpg" alt="Avatar" style="width:80px; height:auto;" /> *@
+                </td>
+                <td>
+                    <span class="tooltips">
+                        @item.ProductName
+                        <a class="tooltip-text cursor-pointer ms-2"><i class="fa-solid fa-pen"></i></a>
+                    </span>
+                    @* @Html.DisplayFor(modelItem => item.ProductName) *@
+
+                </td>
+                <td class="text-end">
+                    @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", item.Price)
+                </td>
+                <td class="text-end">
+                    @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", item.Discount)
+                </td>
+                <td class="text-center">
+                    @Html.ActionLink("Sửa", "Edit", new { id = item.Id }) |
+                    @Html.ActionLink("Chi tiết", "Details", new { id = item.Id }) |
+                    @Html.ActionLink("Xóa", "Delete", new { id = item.Id }) 
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('form.search').on('submit', function (event) {
+                event.preventDefault();
+                let urlAction = "@Url.Action("Index", "Products")";
+                let searchValue = $(this).find("input[name=ProductName]").val();
+                let url = `${urlAction}?nameProduct=${searchValue}`;
+
+                window.location.href = url;
+            });
+
+            $('.tooltips .tooltip-text').click(function () {
+                console.log($(this).closest('td'));
+            });
+        });
+    </script>
+}

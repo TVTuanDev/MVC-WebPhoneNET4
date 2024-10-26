@@ -1,0 +1,45 @@
+﻿@model IEnumerable<WebPhone.EF.CategoryProduct>
+
+@{
+    ViewData["Title"] = "Danh mục";
+    var count = 0;
+}
+
+<h1>Danh mục sản phẩm</h1>
+
+<p>
+    <a href="@Url.Action("CateCreate")">Tạo mới</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Tên danh mục</th>
+            <th>Ngày tạo</th>
+            <th>Ngày cập nhật</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@(++count)</td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CategoryName)
+                </td>
+                <td>
+                    @item.CreateAt.ToString("dd/MM/yyyy HH:mm:ss")
+                </td>
+                <td>
+                    @(item.UpdateAt == null ? "" : item.UpdateAt?.ToString("dd/MM/yyyy HH:mm:ss"))
+                </td>
+                <td>
+                    @Html.ActionLink("Sửa", "CateEdit", new { id = item.Id }) |
+                    @Html.ActionLink("Chi tiết", "CateDetails", new { id = item.Id }) |
+                    @Html.ActionLink("Xóa", "CateDelete", new { id = item.Id })
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

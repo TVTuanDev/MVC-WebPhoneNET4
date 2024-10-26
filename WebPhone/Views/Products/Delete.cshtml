@@ -1,0 +1,46 @@
+﻿@model Product
+
+@{
+    ViewData["Title"] = "Xóa";
+}
+
+<h1>Xóa sản phẩm</h1>
+
+<h3>Bạn có chắc muốn xóa sản phẩm không?</h3>
+<div>
+    <h4>Sản phẩm</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">Tên sản phẩm</dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.ProductName)
+        </dd>
+        <dt class="col-sm-2">Thông tin sản phẩm</dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Description)
+        </dd>
+        <dt class="col-sm-2">Đơn giá</dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Price)
+        </dd>
+        <dt class="col-sm-2">Giảm giá</dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Discount)
+        </dd>
+        <dt class="col-sm-2">Ngày tạo</dt>
+        <dd class="col-sm-10">
+            @Model.CreateAt.ToString("dd/MM/yyyy HH:mm:ss")
+        </dd>
+        <dt class="col-sm-2">Ngày cập nhật</dt>
+        <dd class="col-sm-10">
+            @(Model.UpdateAt == null ? "" : Model.UpdateAt?.ToString("dd/MM/yyyy HH:mm:ss"))
+        </dd>
+    </dl>
+
+    <form action="@Url.Action("Delete")" method="post">
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.Id)
+        <input type="submit" value="Xóa" class="btn btn-danger" /> |
+        <a href="@Url.Action("CateIndex")">Quay lại</a>
+    </form>
+</div>

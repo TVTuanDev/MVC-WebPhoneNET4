@@ -15,12 +15,6 @@ namespace WebPhone
 
             routes.MapMvcAttributeRoutes();
 
-            //routes.MapRoute(
-            //    name: "Default",
-            //    url: "customer/{action}/{id}",
-            //    defaults: new { controller = "Accounts", action = "Index", id = UrlParameter.Optional }
-            //);
-
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",

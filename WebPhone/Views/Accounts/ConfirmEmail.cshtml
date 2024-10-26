@@ -1,0 +1,24 @@
+﻿@model EmailConfirmed
+@{
+    ViewData["Title"] = "Xác thực email";
+}
+
+<h1>Xác thực email</h1>
+<hr />
+<div class="row">
+    <form action="@Url.Action("ConfirmEmail")" method="post" class="col-md-4">
+        @Html.AntiForgeryToken()
+
+        <div class="form-group">
+            @Html.HiddenFor(m => m.Email)
+        </div>
+        <div class="form-group">
+            @Html.LabelFor(m => m.Code)
+            @Html.TextBoxFor(m => m.Code, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.Code, "", new { @class = "text-danger small" })
+        </div>
+        <div class="form-group mt-3">
+            <button type="submit" class="btn btn-success">Gửi</button>
+        </div>
+    </form>
+</div>

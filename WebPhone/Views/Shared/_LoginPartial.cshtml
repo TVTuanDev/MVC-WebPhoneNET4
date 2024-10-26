@@ -12,13 +12,13 @@
 else
 {
     <div class="btn-group">
-        <button type="button" class="btn" data-bs-toggle="dropdown" aria-expanded="false">
+        <button type="button" class="btn text-white" data-bs-toggle="dropdown" aria-expanded="false">
             Cá nhân
         </button>
         <ul class="dropdown-menu dropdown-menu-end wrap-none">
-            <li>
+            @*<li>
                 <a class="nav-link" href="@Url.Action("InfoCustomer", "Accounts")">Thông tin cá nhân</a>
-            </li>
+            </li>*@
             <li>
                 @using (Html.BeginForm("Logout", "Accounts", FormMethod.Post))
                 {
@@ -28,4 +28,5 @@ else
             </li>
         </ul>
     </div>
+
 }

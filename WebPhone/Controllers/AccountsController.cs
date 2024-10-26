@@ -15,9 +15,12 @@ using WebPhone.Services;
 using System.Runtime.Caching;
 using System.Web.Security;
 using System.Security.Claims;
+using System.Security.Principal;
+using System.Threading;
 
 namespace WebPhone.Controllers
 {
+    [RoutePrefix("customer")]
     public class AccountsController : Controller
     {
         private readonly AppDbContext _context;
@@ -31,6 +34,7 @@ namespace WebPhone.Controllers
         }
 
         [HttpGet]
+        [Route("register")]
         public ActionResult Register()
         {
             if (CheckLogin())
@@ -40,6 +44,7 @@ namespace WebPhone.Controllers
         }
 
         [HttpPost]
+        [Route("register")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Register(RegisterDTO registerDTO)
         {
@@ -91,6 +96,7 @@ namespace WebPhone.Controllers
         }
 
         [HttpGet]
+        [Route("login")]
         public ActionResult Login(string returnUrl = null)
         {
             if (CheckLogin())
@@ -103,6 +109,7 @@ namespace WebPhone.Controllers
         }
 
         [HttpPost]
+        [Route("login")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Login(LoginDTO loginDTO, string returnUrl = null)
         {
@@ -145,39 +152,98 @@ namespace WebPhone.Controllers
                     return RedirectToAction("ConfirmEmail", new { userId = user.Id });
                 }
 
-                // Add cookie xác thực
+                // Bước 1: Tạo Claims
                 var claims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Email, user.Email)
                 };
 
-                var listRoleName = await (from r in _context.Roles
-                                          join ur in _context.UserRoles on r.Id equals ur.RoleId
-                                          where ur.UserId == user.Id
-                                          select r.RoleName).ToListAsync();
+                // Bước 2: Tạo ClaimsIdentity
+                var identity = new ClaimsIdentity(claims, "CustomAuthType");
 
-                foreach (var roleName in listRoleName)
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, roleName));
-                }
-
-                FormsAuthentication.SetAuthCookie(user.Email, loginDTO.RememberMe);
-
-                // Tạo claims identity
-                var identity = new ClaimsIdentity(claims, "Custom");
+                // Bước 3: Tạo ClaimsPrincipal
                 var principal = new ClaimsPrincipal(identity);
 
-                // Tạo cookie cho claims
+                // Bước 4: Tạo Authentication Ticket
                 var authTicket = new FormsAuthenticationTicket(
-                                    1, user.UserName, 
-                                    DateTime.Now, 
-                                    DateTime.Now.AddDays(30), 
-                                    loginDTO.RememberMe, 
-                                    string.Join(",", claims.Select(c => c.Value)));
+                    1,                             // phiên bản
+                    user.UserName,                 // tên người dùng
+                    DateTime.Now,                  // ngày phát hành
+                    DateTime.Now.AddDays(30),   // ngày hết hạn
+                    false,                         // persistent
+                    ""                             // dữ liệu người dùng
+                );
 
-                var encTicket = FormsAuthentication.Encrypt(authTicket);
-                var authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, encTicket);
+                // Bước 5: Mã hóa Ticket
+                string encryptedTicket = FormsAuthentication.Encrypt(authTicket);
+
+                // Bước 6: Tạo Cookie
+                var authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket)
+                {
+                    HttpOnly = true,
+                    Secure = FormsAuthentication.RequireSSL,
+                    Path = FormsAuthentication.FormsCookiePath
+                };
+
+                // Thêm cookie vào response
                 Response.Cookies.Add(authCookie);
+
+                // Bước 7: Thiết lập Principal
+                HttpContext.User = principal;
+                Thread.CurrentPrincipal = principal;
+
+                // Add cookie xác thực
+                //var claims = new List<Claim>
+                //{
+                //    new Claim(ClaimTypes.Email, user.Email),
+                //};
+
+                //var listRoleName = await (from r in _context.Roles
+                //                          join ur in _context.UserRoles on r.Id equals ur.RoleId
+                //                          where ur.UserId == user.Id
+                //                          select r.RoleName).ToListAsync();
+
+                //foreach (var roleName in listRoleName)
+                //{
+                //    claims.Add(new Claim(ClaimTypes.Role, roleName));
+                //}
+
+                //var identity = new ClaimsIdentity(claims, "WebPhoneApp");
+
+                //// Tạo cookie
+                //var authTicket = new FormsAuthenticationTicket(
+                //    1, // phiên bản
+                //    user.UserName, // tên người dùng
+                //    DateTime.Now, // thời điểm tạo
+                //    DateTime.Now.AddMinutes(30), // thời gian hết hạn
+                //    loginDTO.RememberMe, // ghi nhớ
+                //    string.Join(",", identity.Claims.Select(c => c.Value)), // thông tin bổ sung (có thể là role)
+                //    FormsAuthentication.FormsCookiePath);
+
+                //string encryptedTicket = FormsAuthentication.Encrypt(authTicket);
+                //var authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket);
+                //HttpContext.Response.Cookies.Add(authCookie);
+
+                // Thiết lập user với ClaimsIdentity
+                //HttpContext.User = new GenericPrincipal(identity, identity.Claims.Select(c => c.Type).Distinct().ToArray());
+
+                //FormsAuthentication.SetAuthCookie(user.Email, loginDTO.RememberMe);
+
+                //// Tạo claims identity
+                //var identity = new ClaimsIdentity(claims, "WebPhoneApp");
+                //var principal = new ClaimsPrincipal(identity);
+
+                //// Tạo cookie cho claims
+                //var authTicket = new FormsAuthenticationTicket(
+                //                    1, user.UserName, 
+                //                    DateTime.Now, 
+                //                    DateTime.Now.AddDays(30), 
+                //                    loginDTO.RememberMe, 
+                //                    string.Join(",", claims.Select(c => c.Value)));
+
+                //var encTicket = FormsAuthentication.Encrypt(authTicket);
+                //var authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, encTicket);
+                //Response.Cookies.Add(authCookie);
 
                 return Redirect(returnUrl);
             }
@@ -189,6 +255,7 @@ namespace WebPhone.Controllers
         }
 
         [HttpPost]
+        [Route("logout")]
         [ValidateAntiForgeryToken]
         public ActionResult Logout()
         {
@@ -199,6 +266,7 @@ namespace WebPhone.Controllers
         }
 
         [HttpGet]
+        [Route("confirm-email")]
         public async Task<ActionResult> ConfirmEmail(Guid userId)
         {
             var user = await _context.Users.FindAsync(userId);
@@ -208,12 +276,16 @@ namespace WebPhone.Controllers
                 return RedirectToAction(nameof(Register));
             }
 
-            ViewBag.Email = user.Email;
+            var emailConfirm = new EmailConfirmed
+            {
+                Email = user.Email
+            };
 
-            return View();
+            return View(emailConfirm);
         }
 
         [HttpPost]
+        [Route("confirm-email")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ConfirmEmail(EmailConfirmed emailConfirmed)
         {
@@ -253,12 +325,14 @@ namespace WebPhone.Controllers
         }
 
         [HttpGet]
+        [Route("forgot-password")]
         public ActionResult ForgotPassword()
         {
             return View();
         }
 
         [HttpPost]
+        [Route("forgot-password")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ForgotPassword(string email)
         {
@@ -286,6 +360,7 @@ namespace WebPhone.Controllers
         }
 
         [HttpGet]
+        [Route("confirm-forgot-password")]
         public async Task<ActionResult> ConfirmForgotPassword(Guid userId)
         {
             var user = await _context.Users.FindAsync(userId);
@@ -301,6 +376,7 @@ namespace WebPhone.Controllers
         }
 
         [HttpPost]
+        [Route("confirm-forgot-password")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ConfirmForgotPassword(ForgotPasswordDTO forgotPasswordDTO)
         {
@@ -332,6 +408,31 @@ namespace WebPhone.Controllers
             TempData["Message"] = "Success: Đổi mật khẩu mới thành công";
 
             return RedirectToAction(nameof(Login));
+        }
+
+        [HttpGet]
+        [Route("info")]
+        public ActionResult InfoCustomer()
+        {
+            var claims = HttpContext.User.Identity as ClaimsIdentity;
+            var name = HttpContext.User.Identity.Name;
+            var name1 = claims.FindFirst(ClaimTypes.Name);
+            var role = claims.FindFirst(ClaimTypes.Role);
+            var email = claims.FindFirst(ClaimTypes.Email);
+            //if (email == null)
+            //{
+            //    TempData["Message"] = "Error: Không tìm thấy thông tin";
+            //    return RedirectToAction("Index", "Home");
+            //}
+
+            //var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            //if (user == null)
+            //{
+            //    TempData["Message"] = "Error: Không tìm thấy thông tin";
+            //    return RedirectToAction("Index", "Home");
+            //}
+
+            return View();
         }
 
         private bool CheckLogin() => User.Identity.IsAuthenticated;

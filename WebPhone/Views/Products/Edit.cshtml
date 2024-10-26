@@ -1,0 +1,55 @@
+﻿@model ProductDTO
+
+@{
+    ViewData["Title"] = "Cập nhật";
+}
+
+<h1>Sửa thông tin sản phẩm</h1>
+
+<h4>Sản phẩm</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form action="@Url.Action("Edit")" method="post">
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.Id)
+            <div class="form-group">
+                @Html.LabelFor(m => m.CategoryId)
+                @Html.DropDownListFor(
+                    model => model.CategoryId,
+                    ViewBag.SelectList as SelectList,
+                    "-- Không có --",
+                    new { @class = "form-control" }
+                )
+                @Html.ValidationMessageFor(m => m.CategoryId, "", new { @class = "text-danger small" })
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.ProductName)
+                @Html.TextBoxFor(m => m.ProductName, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.ProductName, "", new { @class = "text-danger small" })
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.Description)
+                @Html.TextBoxFor(m => m.Description, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.Price)
+                @Html.TextBoxFor(m => m.Price, new { @class = "form-control", type = "number" })
+                @Html.ValidationMessageFor(m => m.Price, "", new { @class = "text-danger small" })
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.Discount)
+                @Html.TextBoxFor(m => m.Discount, new { @class = "form-control", type = "number" })
+                @Html.ValidationMessageFor(m => m.Discount, "", new { @class = "text-danger small" })
+            </div>
+            <div class="form-group mt-3">
+                <input type="submit" value="Lưu" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a href="@Url.Action("Index")">Quay lại</a>
+</div>

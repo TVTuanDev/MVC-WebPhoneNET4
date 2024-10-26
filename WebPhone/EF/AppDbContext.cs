@@ -31,7 +31,7 @@ namespace WebPhone.EF
                 .IsUnique();
 
             modelBuilder.Entity<CategoryProduct>()
-                .HasRequired(cp => cp.CateProductParent)
+                .HasOptional(cp => cp.CateProductParent)
                 .WithMany(cp => cp.CateProductChildren)
                 .HasForeignKey(cp => cp.ParentId)
                 .WillCascadeOnDelete(false);

@@ -1,0 +1,16 @@
+﻿@if (User.Identity.IsAuthenticated)
+{
+    <div class="btn-group" style="z-index: 9999;">
+        <button type="button" class="btn text-white" data-bs-toggle="dropdown" aria-expanded="false">Admin</button>
+        <ul class="dropdown-menu wrap-none">
+            <li>@Html.ActionLink("Danh mục sản phẩm", "CateIndex", "Products", null, new { @class = "nav-link text-dark" })</li>
+            <li>@Html.ActionLink("Sản phẩm", "Index", "Products", null, new { @class = "nav-link text-dark" })</li>
+            <li>@Html.ActionLink("Tài khoản", "Index", "Users", null, new { @class = "nav-link text-dark" })</li>
+            <li>@Html.ActionLink("Khách hàng", "Index", "Customers", null, new { @class = "nav-link text-dark" })</li>
+            <li>@Html.ActionLink("Quyền hạn", "Index", "Roles", null, new { @class = "nav-link text-dark" })</li>
+            <li>@Html.ActionLink("Hóa đơn", "Index", "Bills", null, new { @class = "nav-link text-dark" })</li>
+            <li>@Html.ActionLink("Công nợ", "Index", "Debts", null, new { @class = "nav-link text-dark" })</li>
+            <li>@Html.ActionLink("Kho hàng", "Index", "Warehouses", null, new { @class = "nav-link text-dark" })</li>
+        </ul>
+    </div>
+}

@@ -1,0 +1,24 @@
+﻿@{
+    string toast = TempData["Message"] != null ? TempData["Message"].ToString() : null;
+    string[] toastFire = !string.IsNullOrEmpty(toast) ? toast.Split(':') : null;
+    var status = (toastFire == null || toastFire.Length < 2)
+                    ? "info"
+                    : toastFire[0].ToLower();
+    var message = (toastFire == null || toastFire.Length < 2)
+                    ? (TempData["Message"] != null ? TempData["Message"].ToString() : string.Empty)
+                    : toastFire[1];
+}
+
+@if (!string.IsNullOrEmpty(toast))
+{
+    <script>
+        $(function () {
+            const Toast = window.globalVariable;
+
+            Toast.fire({
+                icon: "@status.Trim()",
+                text: "@Html.Raw(message.Trim())"
+            });
+        })
+    </script>
+}

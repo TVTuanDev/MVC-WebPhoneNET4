@@ -116,7 +116,6 @@
                     {
                         Id = c.Guid(nullable: false),
                         ProductName = c.String(nullable: false, maxLength: 500),
-                        Avatar = c.String(),
                         Description = c.String(),
                         Price = c.Int(nullable: false),
                         Discount = c.Int(),
@@ -137,7 +136,7 @@
                         CategoryName = c.String(nullable: false, maxLength: 100),
                         CreateAt = c.DateTime(nullable: false),
                         UpdateAt = c.DateTime(),
-                        ParentId = c.Guid(nullable: false),
+                        ParentId = c.Guid(),
                     })
                 .PrimaryKey(t => t.Id)
                 .ForeignKey("dbo.CategoryProducts", t => t.ParentId)
