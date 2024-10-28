@@ -26,6 +26,9 @@
             <p>Địa chỉ:</p>
             <p>@Model.Address</p>
         </div>
+        <div class="text-end">
+            @Html.ActionLink("Thanh toán", "PaymentDebt", new { id = Model.Id }, new { @class = "btn btn-success" })
+        </div>
     </div>
     <div class="col-md-2 border-end"></div>
     <div class="col-md-2 border-start"></div>
@@ -74,8 +77,5 @@
                 </div>
             }
         }
-    </div>
-    <div class="text-end">
-        @Html.ActionLink("Thanh toán", "PaymentDebt", new { id = Model.Id }, new { @class = "btn btn-success" })
     </div>
 </div>

@@ -1,0 +1,104 @@
+﻿@model IEnumerable<PaymentDebtDTO>
+@{
+    ViewBag.Title = "Thanh toán công nợ";
+    var customer = ViewData["Customer"] as User ?? new User();
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+
+<div class="row mt-5">
+    <div class="col-md-5">
+        <div class="d-flex justify-content-between">
+            <p>Họ tên:</p>
+            <p>@customer.UserName</p>
+        </div>
+        <div class="d-flex justify-content-between">
+            <p>Email:</p>
+            <p>@customer.Email</p>
+        </div>
+        <div class="d-flex justify-content-between">
+            <p>Số điện thoại:</p>
+            <p>@customer.PhoneNumber</p>
+        </div>
+        <div class="d-flex justify-content-between">
+            <p>Địa chỉ:</p>
+            <p>@customer.Address</p>
+        </div>
+        <form action="@Url.Action("PaymentDebt")" method="post" id="paymentBill">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@customer.Id" />
+            <div class="form-group">
+                <label class="form-label">Thanh toán:</label>
+                <input type="number" name="PaymentValue" class="form-control" />
+            </div>
+            <div class="form-group mt-3 text-end">
+                <button class="btn btn-success">Thanh toán</button>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-1 border-end"></div>
+    <div class="col-md-1 border-start"></div>
+    <div class="col-md-5">
+        @*<div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="showBill">
+                <label class="form-check-label" for="showBill">
+                    Chọn hóa đơn
+                </label>
+            </div>*@
+        @foreach (var payment in Model)
+        {
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" value="@payment.Bill.Id" />
+                <div class="card form-check-label">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2">Mua sản phẩm</h6>
+                        <div class="d-flex justify-content-between text-muted">
+                            <span class="card-text">Tổng tiền:</span>
+                            <span>@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", payment.Bill.TotalPrice)</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted">
+                            <span class="card-text">Thanh toán:</span>
+                            <span>@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", payment.PaymentTotal)</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">@payment.Bill.CreateAt.ToString("HH:mm:ss")</small>
+                            @Html.ActionLink("Chi tiết", "DetailBill", new { id = payment.Bill.Id }, new { @class = "card-link" })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div>
+    <a href="@Url.Action("Index")">Quay lại</a>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('form#paymentBill').on('submit', function (e) {
+                e.preventDefault();
+                let form = $(this);
+
+                let inputs = $('.form-check input.form-check-input:checked');
+
+                inputs.each(function () {
+                    let inputEle = `<input type="hidden" name="BillIds" value="${$(this).val()}" />`;
+                    form.append(inputEle);
+                });
+
+                console.log(form)
+                //let inputEle = `<input type="hidden" name="BillIds" value="" />`;
+
+                //$(this).find('input[name=BillIds]').val(input.get());
+
+                //console.log(input.get().join(';'))
+
+                this.submit();
+            });
+        });
+    </script>
+}

@@ -415,6 +415,7 @@
     <Content Include="Views\Debts\Index.cshtml" />
     <Content Include="Views\Debts\DetailCustomer.cshtml" />
     <Content Include="Views\Debts\DetailBill.cshtml" />
+    <Content Include="Views\Debts\PaymentDebt.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

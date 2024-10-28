@@ -94,26 +94,12 @@ namespace WebPhone.Controllers
 
             var customerBills = new List<CustomerBillDTO>();
 
-            foreach (var bill in customer.CustomerBills)
-            {
-                var customerBill = new CustomerBillDTO
-                {
-                    BillDate = bill.CreateAt,
-                    TotalPrice = bill.TotalPrice,
-                    PaymentPrice = bill.PaymentPrice,
-                    BillId = bill.Id
-                };
-
-                customerBills.Add(customerBill);
-            }
-
             var groupPayment = customer.PaymentLogs.GroupBy(p => p.BillId).ToList();
-            //if (paymentLogs.Count > 0) paymentLogs.RemoveAt(0);
 
             foreach (var payment in groupPayment)
             {
                 var paylog = payment.OrderBy(p => p.CreateAt).ToList();
-                if (paylog.Count > 0) paylog.RemoveAt(0);
+                //if (paylog.Count > 0) paylog.RemoveAt(0);
 
                 foreach (var pay in paylog)
                 {
@@ -127,6 +113,20 @@ namespace WebPhone.Controllers
 
                     customerBills.Add(customerBill);
                 }
+
+            }
+
+            foreach (var bill in customer.CustomerBills)
+            {
+                var customerBill = new CustomerBillDTO
+                {
+                    BillDate = bill.CreateAt,
+                    TotalPrice = bill.TotalPrice,
+                    PaymentPrice = bill.PaymentPrice,
+                    BillId = bill.Id
+                };
+
+                customerBills.Add(customerBill);
             }
 
             ViewBag.CustomerBills = customerBills.OrderByDescending(cb => cb.BillDate);
@@ -171,6 +171,8 @@ namespace WebPhone.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            ViewData["Customer"] = customer;
+
             // Lấy những hóa đơn chưa được thanh toán hoặc thanh toán không hết
             var bills = await _context.Bills.Where(b => b.CustomerId == customer.Id &&
                             (!_context.PaymentLogs.Any(p => p.BillId == b.Id) ||
@@ -191,7 +193,100 @@ namespace WebPhone.Controllers
                 paymentDebts.Add(paymentDebt);
             }
 
-            return View();
+            return View(paymentDebts);
+        }
+
+        [HttpPost]
+        [Route("payment")]
+        public async Task<ActionResult> PaymentDebt(Guid id, List<Guid> billIds, int? paymentValue)
+        {
+            if (paymentValue == null)
+            {
+                TempData["Message"] = "Error: Vui lòng nhập đầy đủ thông tin";
+                return RedirectToAction(nameof(PaymentDebt), new { id });
+            }
+
+            var customer = await _context.Users.FindAsync(id);
+            if (customer == null)
+            {
+                TempData["Message"] = "Error: Không tìm thấy thông tin khách hàng";
+                return RedirectToAction(nameof(PaymentDebt), new { id });
+            }
+
+            var bills = new List<Bill>();
+            if (billIds == null)
+            {
+                bills = await _context.Bills.Where(b => b.CustomerId == customer.Id &&
+                            (!_context.PaymentLogs.Any(p => p.BillId == b.Id) ||
+                            _context.PaymentLogs.Where(pl => pl.BillId == b.Id)
+                            .Sum(pl => pl.Price) < b.TotalPrice))
+                            .ToListAsync();
+            }
+            else
+            {
+                foreach (Guid guidId in billIds)
+                {
+                    var bill = await _context.Bills.FindAsync(guidId);
+                    if (bill == null)
+                    {
+                        TempData["Message"] = "Error: Không tìm thấy thông tin hóa đơn";
+                        return RedirectToAction(nameof(PaymentDebt), new { id });
+                    }
+
+                    bills.Add(bill);
+                }
+            }
+
+            int price = paymentValue ?? 0;
+
+            var paymentLogs = await _context.PaymentLogs.Where(p => p.CustomerId == customer.Id).ToListAsync();
+
+            foreach (var bill in bills)
+            {
+                var paymentInBill = paymentLogs.Where(p => p.BillId == bill.Id).Sum(p => p.Price);
+                var paymentPrice = bill.TotalPrice - paymentInBill;
+                if (price <= 0) break;
+                else if (price >= paymentPrice)
+                {
+                    var paymentLog = new PaymentLog
+                    {
+                        BillId = bill.Id,
+                        CustomerId = customer.Id,
+                        Price = paymentPrice,
+                    };
+
+                    _context.PaymentLogs.Add(paymentLog);
+
+                    price -= paymentPrice;
+                }
+                else
+                {
+                    var paymentLog = new PaymentLog
+                    {
+                        BillId = bill.Id,
+                        CustomerId = customer.Id,
+                        Price = price,
+                    };
+
+                    _context.PaymentLogs.Add(paymentLog);
+                    break;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = "Success: Thanh toán thành công";
+
+            return RedirectToAction(nameof(PaymentDebt), new { id });
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _context.Dispose(); // Giải phóng DbContext
+            }
+            base.Dispose(disposing);
         }
     }
 }
