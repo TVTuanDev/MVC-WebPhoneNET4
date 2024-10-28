@@ -13,7 +13,7 @@ namespace WebPhone.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "202410260817299_InitDatabase"; }
+            get { return "202410280449137_InitDatabase"; }
         }
         
         string IMigrationMetadata.Source
