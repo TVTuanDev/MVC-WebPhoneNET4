@@ -1,0 +1,91 @@
+﻿@model IEnumerable<Bill>
+
+@{
+    ViewData["Title"] = "Danh mục hóa đơn";
+    int count = 0;
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>
+    <a href="@Url.Action("Create")">Tạo mới</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Tên khách hàng</th>
+            <th>Tên nhân viên</th>
+            <th>Giá</th>
+            <th>Giảm giá</th>
+            <th>Tổng tiền</th>
+            <th>Đã thanh toán</th>
+            <th>Thời gian tạo</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@(++count)</td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CustomerName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.EmploymentName)
+                </td>
+                <td>
+                    @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", item.Price)
+                </td>
+                <td>
+                    @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", item.Discount)
+                </td>
+                <td>
+                    @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", item.TotalPrice)
+                </td>
+                <td>
+                    @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", item.PaymentPrice)
+                </td>
+                <td>
+                    @item.CreateAt.ToString("dd/MM/yyyy HH:mm:ss")
+                </td>
+                <td class="d-flex justify-content-between align-items-center">
+                    @*@Html.ActionLink("Sửa", "Edit", new { id = item.Id }) |*@
+                    @Html.ActionLink("Chi tiết", "Export", new { id = item.Id }) |
+                    @using (Html.BeginForm("Delete", "Bills", new { id = item.Id }, FormMethod.Post, new { @class = "d-inline-block", id = "delete-bill" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-link p-0">Xóa</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        $(function () {
+            const Toast = window.globalVariable;
+            $('form#delete-bill').on('submit', function (e) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: "Bạn chắc chứ?",
+                    text: "Thao tác này sẽ không được hoàn lại!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Đồng ý",
+                    cancelButtonText: "Không"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}

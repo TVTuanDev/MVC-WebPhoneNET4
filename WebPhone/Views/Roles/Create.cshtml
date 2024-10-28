@@ -1,0 +1,29 @@
+﻿@model RoleDTO
+
+@{
+    ViewData["Title"] = "Thêm mới quyền";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<h4>Role</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form action="@Url.Action("Create")" method="post">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                @Html.LabelFor(m => m.RoleName)
+                @Html.TextBoxFor(m => m.RoleName, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.RoleName, "", new { @class = "text-danger" })
+            </div>
+            <div class="form-group mt-3">
+                <input type="submit" value="Tạo mới" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a href="@Url.Action("Index")">Quay lại</a>
+</div>

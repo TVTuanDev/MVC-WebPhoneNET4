@@ -1,0 +1,136 @@
+﻿@model Bill
+@{
+    ViewData["Title"] = "Chi tiết hóa đơn";
+    int count = 0;
+    var paymentLogs = ViewBag.PaymentLogs;
+    var date = new DateTime();
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-7">
+        <div class="d-flex justify-content-between">
+            <div>Tên khách hàng: </div>
+            <div>@Model.Customer.UserName</div>
+        </div>
+        <div class="d-flex justify-content-between my-3">
+            <div>Email: </div>
+            <div>@Model.Customer.Email</div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <div>Số điện thoại: </div>
+            <div>@Model.Customer.PhoneNumber</div>
+        </div>
+        <div class="d-flex justify-content-between my-3">
+            <div>Địa chỉ: </div>
+            <div>@Model.Customer.Address</div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <div>Ngày tạo: </div>
+            <div>@Model.CreateAt.ToString("dd/MM/yyyy HH:mm:ss")</div>
+        </div>
+        <table class="table table-bordered my-3">
+            <thead>
+                <tr>
+                    <th class="text-center">STT</th>
+                    <th class="text-center">Tên sản phẩm</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-center">Đơn giá</th>
+                    <th class="text-center">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.BillInfos)
+                {
+                    <tr>
+                        <td class="text-center">@(++count)</td>
+                        <td>@item.ProductName</td>
+                        <td class="text-center">@item.Quantity</td>
+                        @if (item.Discount == null)
+                        {
+                            <td class="text-end">@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", item.Price)</td>
+                        }
+                        else
+                        {
+                            <td class="text-end">
+                                <s>@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", item.Price)</s>
+                                <br />
+                                @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", item.Discount)
+                            </td>
+                        }
+                        <td class="text-end">@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", (item.Discount ?? item.Price) * item.Quantity)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="row">
+            <div class="col-md-8 col-sm-6"></div>
+            <div class="col-md-4 col-sm-6">
+                <div class="form-group d-flex justify-content-between">
+                    <label class="col-form-label wrap-none">Tổng cộng: </label>
+                    <label class="col-form-label">
+                        @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", Model.Price)
+                    </label>
+                </div>
+                <div class="form-group d-flex justify-content-between">
+                    <label class="col-form-label wrap-none">Giảm giá: </label>
+                    <label class="col-form-label">
+                        @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", Model.Discount)
+                    </label>
+                </div>
+                <div class="form-group d-flex justify-content-between">
+                    <label class="col-form-label wrap-none">Tổng tiền: </label>
+                    <label class="col-form-label">
+                        @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", Model.TotalPrice)
+                    </label>
+                </div>
+                <div class="form-group d-flex justify-content-between">
+                    <label class="col-form-label wrap-none">Đã thanh toán: </label>
+                    <label class="col-form-label">
+                        @String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", Model.PaymentPrice)
+                    </label>
+                </div>
+                <div class="form-group text-end mt-3 no-print">
+                    <button class="btn btn-success btn-export">Xuất hóa đơn</button>
+                </div>
+            </div>
+        </div>
+        <div class="no-print">
+            <a href="@Url.Action("Index")">Quay lại</a>
+        </div>
+    </div>
+    <div class="col-md-1 border-end"></div>
+    <div class="col-md-1 border-start"></div>
+    <div class="col-md-3">
+        @foreach (var paymentLog in paymentLogs)
+        {
+            if (date.ToString("dd/MM/yyyy") != paymentLog.CreateAt.ToString("dd/MM/yyyy"))
+            {
+                date = paymentLog.CreateAt;
+                <p>@paymentLog.CreateAt.ToString("dd/MM/yyyy")</p>
+            }
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2">Thanh toán</h6>
+                    <div class="d-flex justify-content-between text-muted">
+                        <span class="card-text">Tổng tiền:</span>
+                        <span>@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", paymentLog.Price)</span>
+                    </div>
+                    <small class="text-muted">@paymentLog.CreateAt.ToString("HH:mm:ss")</small>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('button.btn-export').click(function () {
+                window.print();
+            });
+        });
+    </script>
+}

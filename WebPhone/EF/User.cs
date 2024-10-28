@@ -31,7 +31,7 @@ namespace WebPhone.EF
         [StringLength(200)]
         public string PasswordHash { get; set; }
         public bool EmailConfirmed { get; set; }
-        public DateTime CreateAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreateAt { get; set; } = DateTime.Now;
         public DateTime? UpdateAt { get; set; }
         public virtual ICollection<Bill> CustomerBills { get; set; } = new List<Bill>();
         public virtual ICollection<Bill> EmploymentBills { get; set; } = new List<Bill>();

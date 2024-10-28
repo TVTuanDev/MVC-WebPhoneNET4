@@ -21,7 +21,7 @@ namespace WebPhone.EF
         public int Price { get; set; }
         public int? Discount { get; set; }
         public int Quantity { get; set; }
-        public DateTime CreateAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreateAt { get; set; } = DateTime.Now;
         public DateTime? UpdateAt { get; set; }
         public virtual Product Product { get; set; }
         public virtual Bill Bill { get; set; }

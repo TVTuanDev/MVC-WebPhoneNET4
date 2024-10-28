@@ -22,3 +22,38 @@ textarea {
 .wrap-none {
     white-space: nowrap;
 }
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.tooltip-text {
+    visibility: hidden;
+}
+
+.tooltips:hover .tooltip-text {
+    visibility: inherit;
+}
+
+.suggestions {
+    width: 300px;
+    top: 50px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+}
+
+.list-group-item {
+    cursor: pointer;
+}
+
+    .list-group-item:hover {
+        background-color: #f1f1f1;
+    }
+
+/* Định dạng giao diện input ấn */
+@media print {
+    .no-print {
+        display: none;
+    }
+}

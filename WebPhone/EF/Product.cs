@@ -19,7 +19,7 @@ namespace WebPhone.EF
         public string Description { get; set; }
         public int Price { get; set; }
         public int? Discount { get; set; }
-        public DateTime CreateAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreateAt { get; set; } = DateTime.Now;
         public DateTime? UpdateAt { get; set; }
         public Guid? CategoryId { get; set; }
         public virtual CategoryProduct CategoryProduct { get; set; }

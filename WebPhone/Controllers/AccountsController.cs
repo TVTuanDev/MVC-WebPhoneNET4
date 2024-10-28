@@ -131,7 +131,7 @@ namespace WebPhone.Controllers
                 }
 
                 var user = await _context.Users.FirstOrDefaultAsync(c => c.Email == loginDTO.Email);
-                if (user is null)
+                if (user == null)
                 {
                     TempData["Message"] = "Error: Thông tin tài khoản không chính xác";
                     return View(loginDTO);
@@ -152,98 +152,32 @@ namespace WebPhone.Controllers
                     return RedirectToAction("ConfirmEmail", new { userId = user.Id });
                 }
 
-                // Bước 1: Tạo Claims
+                // Tạo danh sách các Claim
                 var claims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.Email, user.Email)
+                    new Claim(ClaimTypes.Email, user.Email),
                 };
 
-                // Bước 2: Tạo ClaimsIdentity
-                var identity = new ClaimsIdentity(claims, "CustomAuthType");
+                // Lấy danh sách vai trò của người dùng
+                var listRoleName = await (from r in _context.Roles
+                                          join ur in _context.UserRoles on r.Id equals ur.RoleId
+                                          where ur.UserId == user.Id
+                                          select r.RoleName).ToListAsync();
 
-                // Bước 3: Tạo ClaimsPrincipal
-                var principal = new ClaimsPrincipal(identity);
-
-                // Bước 4: Tạo Authentication Ticket
-                var authTicket = new FormsAuthenticationTicket(
-                    1,                             // phiên bản
-                    user.UserName,                 // tên người dùng
-                    DateTime.Now,                  // ngày phát hành
-                    DateTime.Now.AddDays(30),   // ngày hết hạn
-                    false,                         // persistent
-                    ""                             // dữ liệu người dùng
-                );
-
-                // Bước 5: Mã hóa Ticket
-                string encryptedTicket = FormsAuthentication.Encrypt(authTicket);
-
-                // Bước 6: Tạo Cookie
-                var authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket)
+                // Thêm các Claim vai trò
+                foreach (var roleName in listRoleName)
                 {
-                    HttpOnly = true,
-                    Secure = FormsAuthentication.RequireSSL,
-                    Path = FormsAuthentication.FormsCookiePath
-                };
+                    claims.Add(new Claim(ClaimTypes.Role, roleName));
+                }
 
-                // Thêm cookie vào response
-                Response.Cookies.Add(authCookie);
+                // Tạo ClaimsIdentity
+                var identity = new ClaimsIdentity(claims, "WebPhoneApp");
 
-                // Bước 7: Thiết lập Principal
-                HttpContext.User = principal;
-                Thread.CurrentPrincipal = principal;
+                // Thiết lập ClaimsPrincipal
+                HttpContext.User = new ClaimsPrincipal(identity);
 
-                // Add cookie xác thực
-                //var claims = new List<Claim>
-                //{
-                //    new Claim(ClaimTypes.Email, user.Email),
-                //};
-
-                //var listRoleName = await (from r in _context.Roles
-                //                          join ur in _context.UserRoles on r.Id equals ur.RoleId
-                //                          where ur.UserId == user.Id
-                //                          select r.RoleName).ToListAsync();
-
-                //foreach (var roleName in listRoleName)
-                //{
-                //    claims.Add(new Claim(ClaimTypes.Role, roleName));
-                //}
-
-                //var identity = new ClaimsIdentity(claims, "WebPhoneApp");
-
-                //// Tạo cookie
-                //var authTicket = new FormsAuthenticationTicket(
-                //    1, // phiên bản
-                //    user.UserName, // tên người dùng
-                //    DateTime.Now, // thời điểm tạo
-                //    DateTime.Now.AddMinutes(30), // thời gian hết hạn
-                //    loginDTO.RememberMe, // ghi nhớ
-                //    string.Join(",", identity.Claims.Select(c => c.Value)), // thông tin bổ sung (có thể là role)
-                //    FormsAuthentication.FormsCookiePath);
-
-                //string encryptedTicket = FormsAuthentication.Encrypt(authTicket);
-                //var authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket);
-                //HttpContext.Response.Cookies.Add(authCookie);
-
-                // Thiết lập user với ClaimsIdentity
-                //HttpContext.User = new GenericPrincipal(identity, identity.Claims.Select(c => c.Type).Distinct().ToArray());
-
-                //FormsAuthentication.SetAuthCookie(user.Email, loginDTO.RememberMe);
-
-                //// Tạo claims identity
-                //var identity = new ClaimsIdentity(claims, "WebPhoneApp");
-                //var principal = new ClaimsPrincipal(identity);
-
-                //// Tạo cookie cho claims
-                //var authTicket = new FormsAuthenticationTicket(
-                //                    1, user.UserName, 
-                //                    DateTime.Now, 
-                //                    DateTime.Now.AddDays(30), 
-                //                    loginDTO.RememberMe, 
-                //                    string.Join(",", claims.Select(c => c.Value)));
-
-                //var encTicket = FormsAuthentication.Encrypt(authTicket);
-                //var authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, encTicket);
-                //Response.Cookies.Add(authCookie);
+                // Thiết lập cookie xác thực
+                FormsAuthentication.SetAuthCookie(user.UserName, loginDTO.RememberMe);
 
                 return Redirect(returnUrl);
             }
@@ -400,7 +334,7 @@ namespace WebPhone.Controllers
             }
 
             user.PasswordHash = PasswordManager.HashPassword(forgotPasswordDTO.Password);
-            user.UpdateAt = DateTime.UtcNow;
+            user.UpdateAt = DateTime.Now;
 
             //_context.Users.Update(user);
             await _context.SaveChangesAsync();

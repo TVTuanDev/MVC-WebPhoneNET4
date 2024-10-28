@@ -16,7 +16,7 @@ namespace WebPhone.EF
         [Required]
         [StringLength(100)]
         public string CategoryName { get; set; }
-        public DateTime CreateAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreateAt { get; set; } = DateTime.Now;
         public DateTime? UpdateAt { get; set; }
         public Guid? ParentId { get; set; }
         public virtual CategoryProduct CateProductParent { get; set; }

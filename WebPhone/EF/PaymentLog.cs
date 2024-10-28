@@ -15,7 +15,7 @@ namespace WebPhone.EF
         public Guid BillId { get; set; }
         public Guid CustomerId { get; set; }
         public int Price { get; set; }
-        public DateTime CreateAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreateAt { get; set; } = DateTime.Now;
         public virtual Bill Bill { get; set; }
         public virtual User Customer { get; set; }
     }

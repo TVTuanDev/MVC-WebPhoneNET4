@@ -1,0 +1,81 @@
+﻿@model User
+@{
+    ViewData["Title"] = "Chi tiết khách hàng";
+    var customerBills = ViewBag.CustomerBills;
+    var date = new DateTime();
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="d-flex justify-content-between">
+            <p>Họ tên:</p>
+            <p>@Model.UserName</p>
+        </div>
+        <div class="d-flex justify-content-between">
+            <p>Email:</p>
+            <p>@Model.Email</p>
+        </div>
+        <div class="d-flex justify-content-between">
+            <p>Số điện thoại:</p>
+            <p>@Model.PhoneNumber</p>
+        </div>
+        <div class="d-flex justify-content-between">
+            <p>Địa chỉ:</p>
+            <p>@Model.Address</p>
+        </div>
+    </div>
+    <div class="col-md-2 border-end"></div>
+    <div class="col-md-2 border-start"></div>
+    <div class="col-md-4">
+        @foreach (var customerBill in customerBills)
+        {
+            if (date.ToString("dd/MM/yyyy") != customerBill.BillDate.ToString("dd/MM/yyyy"))
+            {
+                date = customerBill.BillDate;
+                <p>@customerBill.BillDate.ToString("dd/MM/yyyy")</p>
+            }
+            if (!customerBill.IsPayment)
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2">Mua sản phẩm</h6>
+                        <div class="d-flex justify-content-between text-muted">
+                            <span class="card-text">Tổng tiền:</span>
+                            <span>@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", customerBill.TotalPrice)</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted">
+                            <span class="card-text">Thanh toán:</span>
+                            <span>@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", customerBill.PaymentPrice)</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">@customerBill.BillDate.ToString("HH:mm:ss")</small>
+                            @Html.ActionLink("Chi tiết", "DetailBill", new { id = customerBill.BillId }, new { @class = "card-link" })
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2">Thanh toán</h6>
+                        <div class="d-flex justify-content-between text-muted">
+                            <span class="card-text">Tổng tiền:</span>
+                            <span>@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", customerBill.PaymentPrice)</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">@customerBill.BillDate.ToString("HH:mm:ss")</small>
+                            @Html.ActionLink("Chi tiết", "DetailBill", new { id = customerBill.BillId }, new { @class = "card-link" })
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+    <div class="text-end">
+        @Html.ActionLink("Thanh toán", "PaymentDebt", new { id = Model.Id }, new { @class = "btn btn-success" })
+    </div>
+</div>

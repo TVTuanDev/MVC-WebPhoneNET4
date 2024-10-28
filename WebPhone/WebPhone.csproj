@@ -272,8 +272,11 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\UnityConfig.cs" />
     <Compile Include="Controllers\AccountsController.cs" />
+    <Compile Include="Controllers\BillsController.cs" />
+    <Compile Include="Controllers\DebtsController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ProductsController.cs" />
+    <Compile Include="Controllers\RolesController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
     <Compile Include="EF\AppDbContext.cs" />
     <Compile Include="EF\Bill.cs" />
@@ -299,10 +302,16 @@
     <Compile Include="Models\Accounts\ForgotPasswordDTO.cs" />
     <Compile Include="Models\Accounts\LoginDTO.cs" />
     <Compile Include="Models\Accounts\RegisterDTO.cs" />
+    <Compile Include="Models\Bills\BillDTO.cs" />
+    <Compile Include="Models\Bills\BillProductDTO.cs" />
+    <Compile Include="Models\Debts\CustomerBillDTO.cs" />
+    <Compile Include="Models\Debts\CustomerDebtDTO.cs" />
+    <Compile Include="Models\Debts\PaymentDebtDTO.cs" />
     <Compile Include="Models\PasswordManager.cs" />
     <Compile Include="Models\Products\CateProductDTO.cs" />
     <Compile Include="Models\Products\ProductDTO.cs" />
     <Compile Include="Models\RandomGenerator.cs" />
+    <Compile Include="Models\Roles\RoleDTO.cs" />
     <Compile Include="Models\Users\CustomerDTO.cs" />
     <Compile Include="Models\Users\UserDTO.cs" />
     <Compile Include="Models\Users\UserRoleDTO.cs" />
@@ -394,6 +403,18 @@
     <Content Include="Views\Users\Create.cshtml" />
     <Content Include="Views\Users\Edit.cshtml" />
     <Content Include="Views\Users\Delete.cshtml" />
+    <Content Include="Views\Roles\Index.cshtml" />
+    <Content Include="Views\Roles\Details.cshtml" />
+    <Content Include="Views\Roles\Create.cshtml" />
+    <Content Include="Views\Roles\Edit.cshtml" />
+    <Content Include="Views\Roles\Delete.cshtml" />
+    <Content Include="Views\Users\UserAuthorization.cshtml" />
+    <Content Include="Views\Bills\Index.cshtml" />
+    <Content Include="Views\Bills\Create.cshtml" />
+    <Content Include="Views\Bills\Export.cshtml" />
+    <Content Include="Views\Debts\Index.cshtml" />
+    <Content Include="Views\Debts\DetailCustomer.cshtml" />
+    <Content Include="Views\Debts\DetailBill.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

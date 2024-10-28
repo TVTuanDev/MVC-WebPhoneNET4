@@ -152,7 +152,7 @@ namespace WebPhone.Controllers
 
                 categoryProduct.CategoryName = cateProductDTO.CategoryName;
                 categoryProduct.ParentId = cateProductDTO.ParentId;
-                categoryProduct.UpdateAt = DateTime.UtcNow;
+                categoryProduct.UpdateAt = DateTime.Now;
 
                 //_context.CategoryProducts.Update(categoryProduct);
                 await _context.SaveChangesAsync();
@@ -415,7 +415,7 @@ namespace WebPhone.Controllers
                 product.Price = productDTO.Price;
                 product.Discount = productDTO.Discount;
                 product.CategoryId = productDTO.CategoryId;
-                product.UpdateAt = DateTime.UtcNow;
+                product.UpdateAt = DateTime.Now;
 
                 await _context.SaveChangesAsync();
 

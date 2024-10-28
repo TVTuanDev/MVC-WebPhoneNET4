@@ -1,0 +1,611 @@
+﻿@model BillDTO
+
+@{
+    ViewData["Title"] = "Thêm mới hóa đơn";
+    var customers = ViewBag.Customers as List<User> ?? new List<User>();
+    var products = ViewBag.Products as List<Product> ?? new List<Product>();
+}
+
+<h1>Tạo hóa đơn</h1>
+
+<h4>Hóa đơn</h4>
+<hr />
+<div class="row justify-content-between">
+    <div class="col-md-4 mb-3">
+        <form class="search-customer-name">
+            <div class="form-group">
+                <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#createCustomer">
+                    Thêm khách hàng
+                </button>
+            </div>
+            <div class="form-group mt-3 d-flex position-relative" style="z-index: 1000;">
+                <input class="form-control me-2 search-input" type="search" id="searchCustomer" placeholder="Tìm kiếm khách hàng..." aria-label="Search" autocomplete="off">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+                <div class="position-absolute bg-white border border-secondary rounded shadow suggestions">
+                    <ul class="list-group">
+                        @foreach (var customer in customers)
+                        {
+                            <li class="list-group-item"
+                                data-id="@customer.Id"
+                                data-email="@customer.Email"
+                                data-phoneNumber="@customer.PhoneNumber"
+                                data-address="@customer.Address">
+                                @customer.UserName
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            <input type="hidden" name="idCustomer" />
+            <div class="d-flex justify-content-between mt-3">
+                <div>Tên khách hàng: </div>
+                <div class="customer-name"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+                <div>Email: </div>
+                <div class="customer-email"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+                <div>Số điện thoại: </div>
+                <div class="customer-phoneNumber"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+                <div>Địa chỉ: </div>
+                <div class="customer-address"></div>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-8">
+        <div style="width: 400px;">
+            <form class="d-flex position-relative search-name" style="z-index: 999;">
+                <input class="form-control me-2 search-input" type="search" id="searchInput" placeholder="Tìm kiếm sản phẩm..." aria-label="Search" autocomplete="off">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+                <div class="position-absolute bg-white border border-secondary rounded shadow suggestions">
+                    <ul class="list-group">
+                        @foreach (var product in products)
+                        {
+                            <li class="list-group-item"
+                                data-id="@product.Id"
+                                @*data-avatar="@product.Avatar"*@
+                                data-price="@product.Price"
+                                data-discount="@product.Discount">
+                                @product.ProductName
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </form>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 50px;" class="text-center">STT</th>
+                    <th scope="col" style="width: 130px;" class="text-center">Ảnh đại diện</th>
+                    <th scope="col">Tên sản phẩm</th>
+                    <th scope="col" style="width: 130px;">Giá</th>
+                    <th scope="col" style="width: 130px;">Giảm giá</th>
+                    <th scope="col" style="width: 85px;">Số lượng</th>
+                    <th style="width: 55px;" class="text-center">#</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="row">
+            <div class="col-md-8"></div>
+            <div class="col-md-4">
+                <div class="form-group row">
+                    <label class="col-sm-4 col-form-label wrap-none">Tổng cộng: </label>
+                    <label class="col-sm-8 col-form-label text-end price-end"></label>
+                </div>
+                <div class="form-group">
+                    <div class="d-flex radio-discount">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="Discount" id="percent" checked>
+                            <label class="form-check-label" for="percent">%</label>
+                        </div>
+                        <div class="form-check ms-3">
+                            <input class="form-check-input" type="radio" name="Discount" id="money">
+                            <label class="form-check-label" for="money">Tiền</label>
+                        </div>
+                    </div>
+                    <div class="row pe-0">
+                        <label class="col-sm-4 col-form-label wrap-none">Giảm giá</label>
+                        <div class="col-sm-8 pe-0">
+                            <input type="text" class="form-control text-end" id="discount" autocomplete="off" />
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-4 col-form-label"></label>
+                    <label class="col-sm-8 col-form-label text-end discount-end"></label>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-4 col-form-label wrap-none">Tổng tiền: </label>
+                    <label class="col-sm-8 col-form-label text-end total-price-end"></label>
+                </div>
+                <div class="form-group row mt-3">
+                    <label class="col-sm-4 col-form-label wrap-none">Thanh toán: </label>
+                    <div class="col-sm-8 pe-0">
+                        <input type="text" class="form-control text-end" id="payment-price" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group mt-3 float-end">
+            <button class="btn btn-success" id="createBill">Tạo hóa đơn</button>
+        </div>
+    </div>
+</div>
+
+<div>
+    <a href="@Url.Action("Index")">Quay lại</a>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="createCustomer" tabindex="-1" aria-labelledby="createCustomerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createCustomerLabel">Thêm khách hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create-customer">
+                    <div class="form-group">
+                        <label class="control-label">Tên khách hàng</label>
+                        <input class="form-control" type="text" name="CustomerName" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Email</label>
+                        <input class="form-control" type="text" name="Email" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Số điện thoại</label>
+                        <input class="form-control" type="text" name="PhoneNumber" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Địa chỉ</label>
+                        <input class="form-control" type="text" name="Address" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" name="creareCustomer">Thêm mới</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            const Toast = window.globalVariable;
+            let timeOutSearch;
+            let timeOutSearchCustomer;
+            let count = 0;
+            let discountInput = 0;
+            let btnPercent = $('.form-check input#percent');
+            let btnMoney = $('.form-check input#money');
+            let totalPriceValue = 0;
+
+            $('.search-input').on('focus', function () {
+                $(this).parent().find('.suggestions').show();
+            });
+
+            $('.search-input').on('blur', function () {
+                $(this).parent().find('.suggestions').hide();
+            });
+
+            $('#searchInput').on('input', function () {
+                const value = $(this).val().trim();
+
+                if (timeOutSearch) {
+                    clearTimeout(timeOutSearch);
+                }
+
+                timeOutSearch = setTimeout(function () {
+                    $('#searchInput').val(value);
+                    FilterProduct(value);
+                }, 1000);
+            });
+
+            $('form.search-name').on('submit', function (e) {
+                e.preventDefault();
+
+                const value = $(this).find('#searchInput').val().trim();
+
+                if (timeOutSearch) {
+                    clearTimeout(timeOutSearch);
+                }
+
+                FilterProduct(value);
+            });
+
+            $('form.search-name .suggestions').on('mousedown', '.list-group-item', function () {
+                AddProductInTable($(this));
+            });
+
+            $('#searchCustomer').on('input', function () {
+                const value = $(this).val().trim();
+
+                if (timeOutSearchCustomer) {
+                    clearTimeout(timeOutSearchCustomer);
+                }
+
+                timeOutSearchCustomer = setTimeout(function () {
+                    $('#searchCustomer').val(value);
+                    FilterCustomer(value);
+                }, 1000);
+            });
+
+            $('form.search-customer-name').on('submit', function (e) {
+                e.preventDefault();
+
+                const value = $(this).find('#searchCustomer').val().trim();
+
+                if (timeOutSearchCustomer) {
+                    clearTimeout(timeOutSearchCustomer);
+                }
+
+                FilterCustomer(value);
+            });
+
+            $('form.search-customer-name .suggestions').on('mousedown', '.list-group-item', function () {
+                AddInfoCustomer($(this));
+            });
+
+            $('table.table tbody').on('click', 'button.btn-danger', function () {
+                Swal.fire({
+                    title: "Bạn chắc chứ?",
+                    text: "Thao tác này sẽ không được hoàn lại!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Đồng ý",
+                    cancelButtonText: "Không"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let tbodyEle = $(this).closest('tbody');
+                        let trEle = $(this).closest('tr');
+
+                        trEle.remove();
+
+                        tbodyEle.find('tr').each(function (index) {
+                            $(this).find('th').text(++index);
+                        });
+
+                        count = tbodyEle.find('tr').length;
+
+                        TotalPrice();
+                        DiscountTotalPrice();
+                    }
+                });
+            });
+
+            $('input#discount').on('input', function () {
+                let value = $(this).val();
+                let priceEnd = $('.price-end').text().replace(/[^0-9]/g, '');
+
+                // Xóa bỏ các ký tự không phải là số
+                value = value.replace(/[^0-9]/g, '');
+
+                discountInput = value;
+
+                if (btnPercent.is(':checked') && parseInt(value) > 100) {
+                    value = 100;
+                    discountInput = value;
+                } else {
+                    if(parseInt(value) > parseInt(priceEnd)) {
+                        value = priceEnd;
+                    }
+                    // Thêm dấu phân cách hàng nghìn
+                    value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                }
+
+                // Cập nhật lại giá trị của ô input
+                $(this).val(value);
+
+                DiscountTotalPrice();
+            });
+
+            $('input#payment-price').on('input', function () {
+                let value = $(this).val();
+
+                value = value.replace(/[^0-9]/g, '');
+
+                value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                $(this).val(value);
+            });
+
+            $('table.table tbody').on('input', 'tr .quantity input', function () {
+                let value = $(this).val();
+                value = value.replace(/[^0-9]/g, '');
+                $(this).val(value);
+
+                if (parseInt(value) < 1) {
+                    $(this).val(1);
+                }
+                TotalPrice();
+                DiscountTotalPrice();
+            });
+
+            $('table.table tbody').on('blur', 'tr .quantity input', function () {
+                if(!$(this).val()){
+                    $(this).val(1);
+                }
+                TotalPrice();
+                DiscountTotalPrice();
+            });
+
+            $('.radio-discount input[name=Discount]').click(function () {
+                $('input#discount').val(0);
+
+                discountInput = 0;
+
+                DiscountTotalPrice();
+            });
+
+            $('#createCustomer button[name=creareCustomer]').click(function () {
+                let formCreateCustomer = $('#create-customer').serialize();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("CreateCustomer", "Users")',
+                    data: formCreateCustomer,
+                    success: function (res) {
+                        if (res.Success === false) {
+                            Toast.fire({
+                                icon: 'error',
+                                text: `${res.Message}`
+                            });
+                            return;
+                        }
+
+                        let customer = res.Data;
+
+                        let parent = $('form.search-customer-name');
+                        let customerIdInput = parent.find('input[name=idCustomer]');
+                        let userNameEle = parent.find('.customer-name');
+                        let emailEle = parent.find('.customer-email');
+                        let phoneNumberEle = parent.find('.customer-phoneNumber');
+                        let addressEle = parent.find('.customer-address');
+
+                        customerIdInput.val(customer.id);
+                        userNameEle.text(customer.customerName);
+                        emailEle.text(customer.email);
+                        phoneNumberEle.text(customer.phoneNumber);
+                        addressEle.text(customer.address);
+
+                        $('#createCustomer').modal('hide');
+                    },
+                    error: function (xhr, status, error) {
+                        // Xử lý lỗi
+                        console.error('Lỗi: ' + error);
+                        console.error('Mã trạng thái: ' + xhr.status);
+                        console.error('Chi tiết lỗi: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            $('#createBill').click(function () {
+                let customerId = $('form.search-customer-name input[name=idCustomer]');
+                let listProduct = $('table.table tbody tr');
+                let productIds = [];
+                let quantities = [];
+                let discountStyle = $('.radio-discount input#percent').is(':checked') ? 'Percent' : 'Money';
+                let discountValue = parseInt($('input#discount').val().replace(/[^0-9]/g, ''));
+                let paymentValue = parseInt($('input#payment-price').val().replace(/[^0-9]/g, ''));
+
+                discountValue = discountValue ? discountValue : 0;
+
+                if (customerId.val() === '' || listProduct.length < 1) {
+                    Toast.fire({
+                        icon: 'error',
+                        text: 'Vui lòng nhập đầy đủ thông tin'
+                    });
+
+                    return;
+                }
+
+                listProduct.each(function () {
+                    productIds.push($(this).find('input[name=idProduct]').val());
+                    quantities.push($(this).find('.quantity input').val());
+                });
+
+                let formData = {
+                    CustomerId: customerId.val(),
+                    DiscountStyle: discountStyle,
+                    DiscountValue: discountValue,
+                    ProductId: productIds,
+                    Quantities: quantities,
+                    PaymentValue: paymentValue,
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("Create")',
+                    data: formData,
+                    success: function (res) {
+                        if (res.Success === false) {
+                            Toast.fire({
+                                icon: 'error',
+                                text: `${res.Message}`
+                            });
+                            return false;
+                        }
+
+                        window.location.href = res.Data;
+                    },
+                    error: function (xhr, status, error) {
+                        // Xử lý lỗi
+                        console.error('Lỗi: ' + error);
+                        console.error('Mã trạng thái: ' + xhr.status);
+                        console.error('Chi tiết lỗi: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            function FilterProduct(name) {
+                name = name.trim();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("FilterProduct", "Products")',
+                    data: { name },
+                    success: function (res) {
+                        $('form.search-name .suggestions .list-group').empty();
+
+                        $.each(res.Data, function (index, product) {
+
+                            var li = `<li
+                                        class="list-group-item"
+                                        data-id="${product.id}"
+                                        //data-avatar="${product.avatar}"
+                                        data-price="${product.price}"
+                                        data-discount="${product.discount}"
+                                    >
+                                        ${product.productName}
+                                    </li>`;
+
+                            $('form.search-name .suggestions .list-group').append(li);
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        // Xử lý lỗi
+                        console.error('Lỗi: ' + error);
+                        console.error('Mã trạng thái: ' + xhr.status);
+                        console.error('Chi tiết lỗi: ' + xhr.responseText);
+                    }
+                });
+            }
+
+            function AddProductInTable(product) {
+                let id = product.data('id');
+                //let avatar = product.data('avatar');
+                let name = product.text();
+                let price = product.data('price');
+                let discount = product.data('discount');
+
+                for (let item of $('table.table tbody tr')) {
+                    if (id === $(item).find('input[name=idProduct]').val()) {
+                        let quantityValue = parseInt($(item).find('.quantity input').val());
+                        $(item).find('.quantity input').val(++quantityValue);
+
+                        TotalPrice();
+                        DiscountTotalPrice();
+
+                        return false;
+                    }
+                }
+
+                var tr = `<tr>
+                            <input type="hidden" value="${id}" name="idProduct" />
+                            <th scope="row" class="text-center">${++count}</th>
+                            <td class="text-center">
+                                <img src="https://picsum.photos/100/50?random=${count}" alt="Avatar" style="width:80px; height:auto;" />
+                            </td>
+                            <td>${name}</td>
+                            <td class="price-item" data-price="${price}">${price.toLocaleString('vi-VN')} đ</td>
+                            <td class="discount-item" data-discount="${discount}">${discount ? discount.toLocaleString('vi-VN') + ' đ' : ''}</td>
+                            <td class="quantity">
+                                <input type="number" class="form-control" value="1" min="1" />
+                            </td>
+                            <td class="text-center"><button class="btn btn-danger">Xóa</button></td>
+                        </tr>`;
+
+                $('table.table tbody').append(tr);
+
+                TotalPrice();
+                DiscountTotalPrice();
+            }
+
+            function TotalPrice(){
+                totalPriceValue = 0;
+
+                $('table.table tbody tr').each(function () {
+                    let price = $(this).find('.price-item').data('price');
+                    let discount = $(this).find('.discount-item').data('discount');
+                    let quantity = parseInt($(this).find('.quantity input').val());
+
+                    quantity = quantity ? quantity : 0;
+
+                    totalPriceValue += discount ? discount * quantity : price * quantity;
+                });
+
+                $('.price-end').text(totalPriceValue.toLocaleString('vi-VN') + ' đ');
+                $('.total-price-end').text(totalPriceValue.toLocaleString('vi-VN') + ' đ');
+            }
+
+            function DiscountTotalPrice(){
+                let totalPriceEnd = totalPriceValue;
+                let discountTotal = 0;
+
+                if (btnPercent.is(':checked')) {
+                    let pricePercentTotal = Math.ceil(totalPriceEnd / 100 * discountInput / 1000) * 1000;
+                    totalPriceEnd -= pricePercentTotal;
+                    discountTotal = pricePercentTotal;
+                }
+                else {
+                    discountInput = Math.ceil(discountInput / 1000) * 1000;
+                    totalPriceEnd -= discountInput;
+                    discountTotal = discountInput;
+                }
+
+                discountTotal = discountTotal > totalPriceValue ? totalPriceValue : discountTotal;
+                totalPriceEnd = totalPriceEnd < 0 ? 0 : totalPriceEnd;
+
+                $('.discount-end').text(`- ${discountTotal.toLocaleString('vi-VN')} đ`);
+                $('.total-price-end').text(totalPriceEnd.toLocaleString('vi-VN') + ' đ');
+            }
+
+            function AddInfoCustomer(element) {
+                let parent = element.closest('.search-customer-name');
+                let customerIdInput = parent.find('input[name=idCustomer]');
+                let userNameEle = parent.find('.customer-name');
+                let emailEle = parent.find('.customer-email');
+                let phoneNumberEle = parent.find('.customer-phoneNumber');
+                let addressEle = parent.find('.customer-address');
+
+                customerIdInput.val(element.data('id'));
+                userNameEle.text(element.text());
+                emailEle.text(element.data('email'));
+                phoneNumberEle.text(element.data('phonenumber'));
+                addressEle.text(element.data('address'));
+            }
+
+            function FilterCustomer(name) {
+                name = name.trim();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("FilterCusomterByName", "Users")',
+                    data: { name },
+                    success: function (res) {
+                        $('form.search-customer-name .suggestions .list-group').empty();
+
+                        $.each(res.Data, function (index, customer) {
+
+                            var li = `<li class="list-group-item"
+                                        data-id="${customer.id}"
+                                        data-email="${customer.email}"
+                                        data-phoneNumber="${customer.phoneNumber}"
+                                        data-address="${customer.address}">
+                                        ${customer.userName}
+                                    </li>`;
+
+                            $('form.search-customer-name .suggestions .list-group').append(li);
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        // Xử lý lỗi
+                        console.error('Lỗi: ' + error);
+                        console.error('Mã trạng thái: ' + xhr.status);
+                        console.error('Chi tiết lỗi: ' + xhr.responseText);
+                    }
+                });
+            }
+        });
+    </script>
+}
