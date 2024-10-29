@@ -170,13 +170,9 @@ namespace WebPhone.Controllers
                     claims.Add(new Claim(ClaimTypes.Role, roleName));
                 }
 
-                // Tạo ClaimsIdentity
-                var identity = new ClaimsIdentity(claims, "WebPhoneApp");
+                var claimPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, "WebPhone"));
 
-                // Thiết lập ClaimsPrincipal
-                HttpContext.User = new ClaimsPrincipal(identity);
-
-                // Thiết lập cookie xác thực
+                Session["UserClaim"] = claimPrincipal;
                 FormsAuthentication.SetAuthCookie(user.UserName, loginDTO.RememberMe);
 
                 return Redirect(returnUrl);
@@ -194,6 +190,15 @@ namespace WebPhone.Controllers
         public ActionResult Logout()
         {
             // Đăng xuất và xóa cookie
+            //FormsAuthentication.SignOut();
+
+            // Xóa dữ liệu trong session
+            Session.Clear();
+
+            // Kết thúc session
+            Session.Abandon();
+
+            // Đăng xuất người dùng
             FormsAuthentication.SignOut();
 
             return RedirectToAction(nameof(Login));  // Chuyển hướng đến trang login

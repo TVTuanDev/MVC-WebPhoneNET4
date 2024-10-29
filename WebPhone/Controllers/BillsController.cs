@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
@@ -52,7 +53,9 @@ namespace WebPhone.Controllers
                     });
 
                 // Lấy thông tin nhân viên
-                var employment = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@gmail.com");
+                var claim = Session["UserClaim"] as ClaimsPrincipal;
+                var email = claim.FindFirst(c => c.Type == ClaimTypes.Email).Value;
+                var employment = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
                 if (employment == null)
                     return Json(new
                     {
