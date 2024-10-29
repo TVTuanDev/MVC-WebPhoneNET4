@@ -6,12 +6,14 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using WebPhone.Attributes;
 using WebPhone.EF;
 using WebPhone.Models.Bills;
 
 namespace WebPhone.Controllers
 {
     [RoutePrefix("bill")]
+    [AppAuthorize("aaaaaaaaaaa, bbbbbb")]
     public class BillsController : Controller
     {
         private readonly AppDbContext _context;

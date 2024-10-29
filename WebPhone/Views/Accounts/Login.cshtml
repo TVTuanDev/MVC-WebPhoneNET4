@@ -6,7 +6,7 @@
 <h1>Đăng nhập</h1>
 <hr />
 <div class="row">
-    @using (Html.BeginForm("Login", "Accounts", FormMethod.Post, new { @class = "col-md-4" }))
+    @using (Html.BeginForm("Login", "Accounts", new { returnUrl = ViewData["ReturnUrl"] }, FormMethod.Post, new { @class = "col-md-4" }))
     {
         @Html.AntiForgeryToken()
 

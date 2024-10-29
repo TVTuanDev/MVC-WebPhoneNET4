@@ -271,6 +271,7 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\UnityConfig.cs" />
+    <Compile Include="Attributes\AppAuthorizeAttribute.cs" />
     <Compile Include="Controllers\AccountsController.cs" />
     <Compile Include="Controllers\BillsController.cs" />
     <Compile Include="Controllers\DebtsController.cs" />
@@ -278,6 +279,7 @@
     <Compile Include="Controllers\ProductsController.cs" />
     <Compile Include="Controllers\RolesController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
+    <Compile Include="Controllers\WarehousesController.cs" />
     <Compile Include="EF\AppDbContext.cs" />
     <Compile Include="EF\Bill.cs" />
     <Compile Include="EF\BillInfo.cs" />
@@ -315,6 +317,7 @@
     <Compile Include="Models\Users\CustomerDTO.cs" />
     <Compile Include="Models\Users\UserDTO.cs" />
     <Compile Include="Models\Users\UserRoleDTO.cs" />
+    <Compile Include="Models\Warehouses\WarehouseDTO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\SendMailService.cs" />
   </ItemGroup>
@@ -416,9 +419,13 @@
     <Content Include="Views\Debts\DetailCustomer.cshtml" />
     <Content Include="Views\Debts\DetailBill.cshtml" />
     <Content Include="Views\Debts\PaymentDebt.cshtml" />
+    <Content Include="Views\Home\AccessDenied.cshtml" />
+    <Content Include="Views\Accounts\InfoCustomer.cshtml" />
+    <Content Include="Views\Accounts\ChangePassword.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\Warehouses\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />

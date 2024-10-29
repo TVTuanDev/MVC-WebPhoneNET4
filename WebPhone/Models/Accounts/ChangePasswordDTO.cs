@@ -8,6 +8,8 @@ namespace WebPhone.Models.Accounts
 {
     public class ChangePasswordDTO
     {
+        public Guid Id { get; set; }
+
         [Display(Name = "Mật khẩu cũ")]
         [Required(ErrorMessage = "{0} bắt buộc nhập")]
         [DataType(DataType.Password)]

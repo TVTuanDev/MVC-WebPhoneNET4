@@ -16,9 +16,9 @@ else
             Cá nhân
         </button>
         <ul class="dropdown-menu dropdown-menu-end wrap-none">
-            @*<li>
+            <li>
                 <a class="nav-link" href="@Url.Action("InfoCustomer", "Accounts")">Thông tin cá nhân</a>
-            </li>*@
+            </li>
             <li>
                 @using (Html.BeginForm("Logout", "Accounts", FormMethod.Post))
                 {

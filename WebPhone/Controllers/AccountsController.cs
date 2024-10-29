@@ -17,6 +17,7 @@ using System.Web.Security;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading;
+using WebPhone.Attributes;
 
 namespace WebPhone.Controllers
 {
@@ -187,6 +188,7 @@ namespace WebPhone.Controllers
         [HttpPost]
         [Route("logout")]
         [ValidateAntiForgeryToken]
+        [AppAuthorize]
         public ActionResult Logout()
         {
             // Đăng xuất và xóa cookie
@@ -351,27 +353,83 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("info")]
-        public ActionResult InfoCustomer()
+        public async Task<ActionResult> InfoCustomer()
         {
-            var claims = HttpContext.User.Identity as ClaimsIdentity;
-            var name = HttpContext.User.Identity.Name;
-            var name1 = claims.FindFirst(ClaimTypes.Name);
-            var role = claims.FindFirst(ClaimTypes.Role);
-            var email = claims.FindFirst(ClaimTypes.Email);
-            //if (email == null)
-            //{
-            //    TempData["Message"] = "Error: Không tìm thấy thông tin";
-            //    return RedirectToAction("Index", "Home");
-            //}
+            var claimPrincipal = Session["UserClaim"] as ClaimsPrincipal;
+            var email = claimPrincipal.FindFirst(c => c.Type == ClaimTypes.Email).Value;
+            if (email == null)
+            {
+                TempData["Message"] = "Error: Không tìm thấy thông tin";
+                return RedirectToAction("Index", "Home");
+            }
 
-            //var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            //if (user == null)
-            //{
-            //    TempData["Message"] = "Error: Không tìm thấy thông tin";
-            //    return RedirectToAction("Index", "Home");
-            //}
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                TempData["Message"] = "Error: Không tìm thấy thông tin";
+                return RedirectToAction("Index", "Home");
+            }
 
-            return View();
+            return View(user);
+        }
+
+        [HttpGet]
+        [Route("change-password")]
+        public async Task<ActionResult> ChangePassword()
+        {
+            var claimPrincipal = Session["UserClaim"] as ClaimsPrincipal;
+            var email = claimPrincipal.FindFirst(c => c.Type == ClaimTypes.Email).Value;
+            if (email == null)
+            {
+                TempData["Message"] = "Error: Không tìm thấy thông tin";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                TempData["Message"] = "Error: Không tìm thấy thông tin";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var changePass = new ChangePasswordDTO { Id = user.Id };
+
+            return View(changePass);
+        }
+
+        [HttpPost]
+        [Route("change-password")]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> ChangePassword(ChangePasswordDTO changePasswordDTO)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(changePasswordDTO.Id);
+                if (user == null)
+                {
+                    TempData["Message"] = "Error: Không tìm thấy người dùng";
+                    return RedirectToAction(nameof(InfoCustomer));
+                }
+
+                if (!PasswordManager.VerifyPassword(changePasswordDTO.OldPassword, user.PasswordHash))
+                {
+                    TempData["Message"] = "Error: Mật khẩu cũ không chính xác";
+                    return RedirectToAction(nameof(InfoCustomer));
+                }
+
+                user.PasswordHash = PasswordManager.HashPassword(changePasswordDTO.NewPassword);
+                await _context.SaveChangesAsync();
+
+                TempData["Message"] = "Success: Cập nhật mật khẩu thành công";
+
+                return RedirectToAction(nameof(InfoCustomer));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                TempData["Message"] = "Error: Lỗi hệ thống";
+                return RedirectToAction(nameof(InfoCustomer));
+            }
         }
 
         private bool CheckLogin() => User.Identity.IsAuthenticated;
