@@ -8,12 +8,14 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using WebPhone.Attributes;
 using WebPhone.EF;
 using WebPhone.Models.Products;
 
 namespace WebPhone.Controllers
 {
     [RoutePrefix("product")]
+    [AppAuthorize("Adminitrator, Manage, Employment")]
     public class ProductsController : Controller
     {
         private readonly AppDbContext _context;

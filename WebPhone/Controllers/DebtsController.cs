@@ -5,12 +5,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using WebPhone.Attributes;
 using WebPhone.EF;
 using WebPhone.Models.Debts;
 
 namespace WebPhone.Controllers
 {
     [RoutePrefix("debt")]
+    [AppAuthorize("Adminitrator, Manage, Employment")]
     public class DebtsController : Controller
     {
         private readonly AppDbContext _context;

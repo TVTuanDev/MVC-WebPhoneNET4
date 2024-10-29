@@ -13,7 +13,7 @@ using WebPhone.Models.Bills;
 namespace WebPhone.Controllers
 {
     [RoutePrefix("bill")]
-    [AppAuthorize("aaaaaaaaaaa, bbbbbb")]
+    [AppAuthorize("Adminitrator, Manage, Employment")]
     public class BillsController : Controller
     {
         private readonly AppDbContext _context;

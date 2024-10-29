@@ -10,10 +10,12 @@ using WebPhone.Models.Users;
 using WebPhone.Models;
 using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
+using WebPhone.Attributes;
 
 namespace WebPhone.Controllers
 {
     [RoutePrefix("admin/user")]
+    [AppAuthorize("Adminitrator, Manage")]
     public class UsersController : Controller
     {
         private readonly AppDbContext _context;

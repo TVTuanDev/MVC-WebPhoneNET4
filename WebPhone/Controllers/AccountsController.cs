@@ -353,6 +353,7 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("info")]
+        [AppAuthorize]
         public async Task<ActionResult> InfoCustomer()
         {
             var claimPrincipal = Session["UserClaim"] as ClaimsPrincipal;
@@ -375,6 +376,7 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("change-password")]
+        [AppAuthorize]
         public async Task<ActionResult> ChangePassword()
         {
             var claimPrincipal = Session["UserClaim"] as ClaimsPrincipal;
@@ -400,6 +402,7 @@ namespace WebPhone.Controllers
         [HttpPost]
         [Route("change-password")]
         [ValidateAntiForgeryToken]
+        [AppAuthorize]
         public async Task<ActionResult> ChangePassword(ChangePasswordDTO changePasswordDTO)
         {
             try

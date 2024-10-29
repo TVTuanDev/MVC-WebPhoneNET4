@@ -6,12 +6,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using WebPhone.Attributes;
 using WebPhone.EF;
 using WebPhone.Models.Roles;
 
 namespace WebPhone.Controllers
 {
     [RoutePrefix("admin/role")]
+    [AppAuthorize("Adminitrator")]
     public class RolesController : Controller
     {
         private readonly AppDbContext _context;
