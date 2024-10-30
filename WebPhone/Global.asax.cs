@@ -10,6 +10,7 @@ using WebPhone.Services;
 using Unity;
 using Unity.AspNet.Mvc;
 using Unity.Lifetime;
+using WebPhone.Repositories;
 
 namespace WebPhone
 {
@@ -19,7 +20,8 @@ namespace WebPhone
         {
             // Cấu hình Dependency Injection
             var container = new UnityContainer();
-            container.RegisterType<SendMailService>(new HierarchicalLifetimeManager()); // Scoped
+            container.RegisterType<SendMailService>(new HierarchicalLifetimeManager());
+            container.RegisterType<UserRepository>(new HierarchicalLifetimeManager());
             // Scoped: HierarchicalLifetimeManager
             // Transient: TransientLifetimeManager
             // Singleton: ContainerControlledLifetimeManager

@@ -9,6 +9,7 @@ using System.Web.Mvc;
 using WebPhone.Attributes;
 using WebPhone.EF;
 using WebPhone.Models.Bills;
+using WebPhone.Repositories;
 
 namespace WebPhone.Controllers
 {
@@ -17,10 +18,12 @@ namespace WebPhone.Controllers
     public class BillsController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly UserRepository _userRepository;
 
-        public BillsController()
+        public BillsController(UserRepository userRepository)
         {
             _context = new AppDbContext();
+            _userRepository = userRepository;
         }
 
         [HttpGet]

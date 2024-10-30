@@ -455,18 +455,30 @@
                     url: '@Url.Action("FilterProduct", "Products")',
                     data: { name },
                     success: function (res) {
+                        if (res.Success === false) {
+                            Toast.fire({
+                                icon: 'error',
+                                text: "Lỗi hệ thống"
+                            });
+
+                            console.log(res.Message);
+                            return false;
+                        }
+
+                        console.log(res.Data);
+
                         $('form.search-name .suggestions .list-group').empty();
 
                         $.each(res.Data, function (index, product) {
 
                             var li = `<li
                                         class="list-group-item"
-                                        data-id="${product.id}"
+                                        data-id="${product.Id}"
                                         //data-avatar="${product.avatar}"
-                                        data-price="${product.price}"
-                                        data-discount="${product.discount}"
+                                        data-price="${product.Price}"
+                                        data-discount="${product.Discount}"
                                     >
-                                        ${product.productName}
+                                        ${product.ProductName}
                                     </li>`;
 
                             $('form.search-name .suggestions .list-group').append(li);
@@ -588,11 +600,11 @@
                         $.each(res.Data, function (index, customer) {
 
                             var li = `<li class="list-group-item"
-                                        data-id="${customer.id}"
-                                        data-email="${customer.email}"
-                                        data-phoneNumber="${customer.phoneNumber}"
-                                        data-address="${customer.address}">
-                                        ${customer.userName}
+                                        data-id="${customer.Id}"
+                                        data-email="${customer.Email}"
+                                        data-phoneNumber="${customer.PhoneNumber}"
+                                        data-address="${customer.Address}">
+                                        ${customer.UserName}
                                     </li>`;
 
                             $('form.search-customer-name .suggestions .list-group').append(li);

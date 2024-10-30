@@ -1,0 +1,49 @@
+﻿@model IEnumerable<Warehouse>
+
+@{
+    ViewData["Title"] = "Danh sách kho hàng";
+    int count = 0;
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="d-flex justify-content-between">
+    <div><a href="@Url.Action("Create")">Tạo mới</a></div>
+    <div>
+        <span><a href="@Url.Action("ImportWarehouse")">Nhập kho</a></span> |
+        <span><a href="@Url.Action("ExportWarehouse")">Xuất kho</a></span>
+    </div>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Tên kho</th>
+            <th>Địa chỉ</th>
+            <th>Sức chứa</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@(++count)</td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.WarehouseName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Address)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Capacity)
+                </td>
+                <td>
+                    @Html.ActionLink("Sửa", "Edit", new { id = item.Id }) |
+                    @Html.ActionLink("Xem", "Details", new { id = item.Id }) |
+                    @Html.ActionLink("Xóa", "Delete", new { id = item.Id })
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

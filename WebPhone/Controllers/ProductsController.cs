@@ -222,35 +222,17 @@ namespace WebPhone.Controllers
         #region CURD Product
         [HttpGet]
         [Route]
-        public async Task<ActionResult> Index(string nameProduct = null, int page = 1)
+        public async Task<ActionResult> Index(string nameProduct, int page = 1)
         {
             try
             {
-                var listProduct = new List<Product>();
-                //var listProductCache = await GetProductInCache();
+                nameProduct = nameProduct == null ? "" : nameProduct;
 
-                // Nếu có truyền name product
-                if (!string.IsNullOrEmpty(nameProduct))
-                {
-                    listProduct = await (from p in _context.Products
+                var listProduct = await (from p in _context.Products
                                          where p.ProductName.Contains(nameProduct)
                                          orderby p.Price ascending
                                          select p).ToListAsync();
 
-                    //listProduct = listProductCache.OrderBy(p => p.Price)
-                    //                .Where(p => p.ProductName.Contains(nameProduct))
-                    //                .ToList();
-                }
-                else
-                {
-                    listProduct = await (from product in _context.Products
-                                         orderby product.Price ascending
-                                         select product).ToListAsync();
-
-                    //listProduct = listProductCache.OrderByDescending(p => p.Price).ToList();
-                }
-
-                // Lấy tổng số lượng sản phẩm
                 var total = listProduct.Count();
                 // Chia ra số trang theo số lượng hiện thị sản phẩm trên mỗi trang
                 var countPage = (int)Math.Ceiling((double)total / ITEM_PER_PAGE);
@@ -562,26 +544,38 @@ namespace WebPhone.Controllers
         [Route("filter")]
         public async Task<JsonResult> FilterProduct(string name)
         {
-            name = string.IsNullOrEmpty(name) ? "" : name;
-
-            var products = await _context.Products
-                            .Where(p => p.ProductName.Contains(name))
-                            .Take(100)
-                            .Select(p => new Product
-                            {
-                                Id = p.Id,
-                                ProductName = p.ProductName,
-                                Price = p.Price,
-                                Discount = p.Discount,
-                            })
-                            .ToListAsync();
-
-            return Json(new
+            try
             {
-                Success = true,
-                Message = "Success",
-                Data = products
-            });
+                name = string.IsNullOrEmpty(name) ? "" : name;
+
+                var products = await _context.Products
+                                .Where(p => p.ProductName.Contains(name))
+                                .Take(100)
+                                .ToListAsync();
+
+                var listProduct = products.Select(p => new Product
+                {
+                    Id = p.Id,
+                    ProductName = p.ProductName,
+                    Price = p.Price,
+                    Discount = p.Discount,
+                }).ToList();
+
+                return Json(new
+                {
+                    Success = true,
+                    Message = "Success",
+                    Data = listProduct
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    Success = false,
+                    Message = ex.Message,
+                });
+            }
         }
 
         private async Task RenderCatePoduct()

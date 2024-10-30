@@ -15,6 +15,7 @@ namespace WebPhone.Attributes
         {
             RoleName = roleName;
         }
+
         protected override bool AuthorizeCore(HttpContextBase httpContext)
         {
             if (!httpContext.User.Identity.IsAuthenticated)

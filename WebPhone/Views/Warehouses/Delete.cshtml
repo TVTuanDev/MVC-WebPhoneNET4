@@ -1,31 +1,27 @@
-﻿@model Product
+﻿@model Warehouse
 
 @{
-    ViewData["Title"] = "Xóa";
+    ViewData["Title"] = "Xóa kho hàng";
 }
 
-<h1>Xóa sản phẩm</h1>
+<h1>@ViewData["Title"]</h1>
 
-<h3>Bạn có chắc muốn xóa sản phẩm không?</h3>
+<h3>Bạn có chắc muốn xóa không?</h3>
 <div>
-    <h4>Sản phẩm</h4>
+    <h4>Kho hàng</h4>
     <hr />
     <dl class="row">
-        <dt class="col-sm-2">Tên sản phẩm</dt>
+        <dt class="col-sm-2">Tên kho</dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.ProductName)
+            @Html.DisplayFor(model => model.WarehouseName)
         </dd>
-        <dt class="col-sm-2">Thông tin sản phẩm</dt>
+        <dt class="col-sm-2">Địa chỉ</dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Description)
+            @Html.DisplayFor(model => model.Address)
         </dd>
-        <dt class="col-sm-2">Đơn giá</dt>
+        <dt class="col-sm-2">Sức chứa</dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Price)
-        </dd>
-        <dt class="col-sm-2">Giảm giá</dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Discount)
+            @Html.DisplayFor(model => model.Capacity)
         </dd>
         <dt class="col-sm-2">Ngày tạo</dt>
         <dd class="col-sm-10">
@@ -36,7 +32,6 @@
             @(Model.UpdateAt == null ? "" : Model.UpdateAt?.ToString("dd/MM/yyyy HH:mm:ss"))
         </dd>
     </dl>
-
     <form action="@Url.Action("Delete")" method="post">
         @Html.AntiForgeryToken()
         @Html.HiddenFor(m => m.Id)

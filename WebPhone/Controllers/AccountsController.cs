@@ -1,44 +1,33 @@
-﻿using Org.BouncyCastle.Crypto.Prng;
-using System;
-using System.Collections.Generic;
-using System.Data.Entity;
-using System.Linq;
-using System.Text.RegularExpressions;
+﻿using System;
 using System.Threading.Tasks;
-using System.Web;
-using System.Web.Caching;
 using System.Web.Mvc;
 using WebPhone.EF;
 using WebPhone.Models;
 using WebPhone.Models.Accounts;
-using WebPhone.Services;
-using System.Runtime.Caching;
 using System.Web.Security;
-using System.Security.Claims;
-using System.Security.Principal;
-using System.Threading;
 using WebPhone.Attributes;
+using WebPhone.Repositories;
 
 namespace WebPhone.Controllers
 {
     [RoutePrefix("customer")]
     public class AccountsController : Controller
     {
-        private readonly AppDbContext _context;
-        private readonly SendMailService _sendMail;
-        private readonly ObjectCache _cache = MemoryCache.Default;
+        private readonly UserRepository _userRepository;
 
-        public AccountsController(SendMailService sendMail)
+        public AccountsController
+            (
+                UserRepository userRepository
+            )
         {
-            _context = new AppDbContext();
-            _sendMail = sendMail;
+            _userRepository = userRepository;
         }
 
         [HttpGet]
         [Route("register")]
         public ActionResult Register()
         {
-            if (CheckLogin())
+            if (_userRepository.CheckLogin())
                 return RedirectToAction("Index", "Home");
 
             return View();
@@ -57,40 +46,23 @@ namespace WebPhone.Controllers
                     return View(registerDTO);
                 }
 
-                if (!CheckRegexMail(registerDTO.Email))
+                var result = await _userRepository.RegisterAsync(registerDTO);
+                if(!result.Succeeded)
                 {
-                    TempData["Message"] = "Error: Không đúng định dạng email";
+                    TempData["Message"] = $"Error: {result.Message}";
                     return View(registerDTO);
                 }
-
-                var userByEmail = await _context.Users.FirstOrDefaultAsync(c => c.Email == registerDTO.Email);
-                if (userByEmail != null)
-                {
-                    TempData["Message"] = "Error: Email đã được sử dụng";
-                    return View(registerDTO);
-                }
-
-                var user = new User
-                {
-                    UserName = registerDTO.UserName,
-                    Email = registerDTO.Email,
-                    PhoneNumber = registerDTO.PhoneNumber,
-                    Address = registerDTO.Address,
-                    PasswordHash = PasswordManager.HashPassword(registerDTO.Password)
-                };
-
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
 
                 // Gửi code gửi mail xác thực
-                await SendMailConfirmCode(registerDTO.Email);
+                await _userRepository.SendMailConfirmCodeAsync(registerDTO.Email);
 
                 TempData["Message"] = "Success: Mã xác thực đã được gửi qua hòm thư";
 
-                return RedirectToAction("ConfirmEmail", new { userId = user.Id });
+                return RedirectToAction(nameof(ConfirmEmail), new { email = registerDTO.Email });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 TempData["Message"] = "Error: Lỗi hệ thống";
                 return View(registerDTO);
             }
@@ -100,7 +72,7 @@ namespace WebPhone.Controllers
         [Route("login")]
         public ActionResult Login(string returnUrl = null)
         {
-            if (CheckLogin())
+            if (_userRepository.CheckLogin())
                 return RedirectToAction("Index", "Home");
 
             returnUrl = returnUrl == null ? Url.Content("/") : returnUrl;
@@ -125,56 +97,22 @@ namespace WebPhone.Controllers
                     return View(loginDTO);
                 }
 
-                if (!CheckRegexMail(loginDTO.Email))
+                var result = await _userRepository.LoginAsync(loginDTO);
+                if (!result.Succeeded)
                 {
-                    TempData["Message"] = "Error: Không đúng định dạng email";
+                    if(result.Code == "EmailIsNotConfirm")
+                    {
+                        await _userRepository.SendMailConfirmCodeAsync(loginDTO.Email);
+
+                        TempData["Message"] = "Warning: Email chưa được xác thực, vui lòng xác thực email qua hòm thư";
+                        return RedirectToAction(nameof(ConfirmEmail), new { email = loginDTO.Email });
+                    }
+
+                    TempData["Message"] = $"Error: {result.Message}";
                     return View(loginDTO);
                 }
 
-                var user = await _context.Users.FirstOrDefaultAsync(c => c.Email == loginDTO.Email);
-                if (user == null)
-                {
-                    TempData["Message"] = "Error: Thông tin tài khoản không chính xác";
-                    return View(loginDTO);
-                }
-
-                if (!PasswordManager.VerifyPassword(loginDTO.Password, user.PasswordHash))
-                {
-                    TempData["Message"] = "Error: Thông tin tài khoản không chính xác";
-                    return View(loginDTO);
-                }
-
-                if (!user.EmailConfirmed)
-                {
-                    // Gửi code gửi mail xác thực
-                    await SendMailConfirmCode(user.Email);
-
-                    TempData["Message"] = "Success: Email chưa được xác thực, vui lòng xác thực email qua hòm thư";
-                    return RedirectToAction("ConfirmEmail", new { userId = user.Id });
-                }
-
-                // Tạo danh sách các Claim
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Email, user.Email),
-                };
-
-                // Lấy danh sách vai trò của người dùng
-                var listRoleName = await (from r in _context.Roles
-                                          join ur in _context.UserRoles on r.Id equals ur.RoleId
-                                          where ur.UserId == user.Id
-                                          select r.RoleName).ToListAsync();
-
-                // Thêm các Claim vai trò
-                foreach (var roleName in listRoleName)
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, roleName));
-                }
-
-                var claimPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, "WebPhone"));
-
-                Session["UserClaim"] = claimPrincipal;
-                FormsAuthentication.SetAuthCookie(user.UserName, loginDTO.RememberMe);
+                TempData["Message"] = "Success: Chào mừng quay trở lại";
 
                 return Redirect(returnUrl);
             }
@@ -191,9 +129,6 @@ namespace WebPhone.Controllers
         [AppAuthorize]
         public ActionResult Logout()
         {
-            // Đăng xuất và xóa cookie
-            //FormsAuthentication.SignOut();
-
             // Xóa dữ liệu trong session
             Session.Clear();
 
@@ -208,9 +143,9 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("confirm-email")]
-        public async Task<ActionResult> ConfirmEmail(Guid userId)
+        public async Task<ActionResult> ConfirmEmail(string email)
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _userRepository.GetUserByEmailAsync(email);
             if (user == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin người dùng";
@@ -238,28 +173,27 @@ namespace WebPhone.Controllers
                     return View(emailConfirmed);
                 }
 
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == emailConfirmed.Email);
+                var user = await _userRepository.GetUserByEmailAsync(emailConfirmed.Email);
                 if (user == null)
                 {
                     TempData["Message"] = "Error: Không thấy thông tin người dùng";
                     return View(emailConfirmed);
                 }
 
-                if (!VerifyEmail(emailConfirmed.Email, emailConfirmed.Code))
+                if (!_userRepository.VerifyEmail(user.Email, emailConfirmed.Code))
                 {
                     TempData["Message"] = "Error: Mã xác thực không đúng hoặc đã hết hạn";
                     return View(emailConfirmed);
                 }
 
-                user.EmailConfirmed = true;
-                //_context.Users.Update(user);
-                await _context.SaveChangesAsync();
+                await _userRepository.ConfirmEmailAsync(user);
 
                 TempData["Message"] = "Success: Xác thực tài khoản thành công";
                 return RedirectToAction(nameof(Login));
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 TempData["Message"] = "Error: Lỗi hệ thống";
                 return View(emailConfirmed);
             }
@@ -279,43 +213,55 @@ namespace WebPhone.Controllers
         {
             ViewData["Email"] = email;
 
-            if (!CheckRegexMail(email))
+            try
             {
-                TempData["Message"] = "Error: Không đúng định dạng email";
+                if (!_userRepository.CheckRegexMail(email))
+                {
+                    TempData["Message"] = "Error: Không đúng định dạng email";
+                    return View();
+                }
+
+                var userByEmail = await _userRepository.GetUserByEmailAsync(email);
+                if (userByEmail == null)
+                {
+                    TempData["Message"] = "Error: Email chưa được đăng ký";
+                    return View();
+                }
+
+                // Gửi code gửi mail forgot password
+                await _userRepository.SendForgotPasswordCodeAsync(email);
+
+                TempData["Message"] = "Success: Mã xác thực đã được gửi qua hòm thư";
+
+                return RedirectToAction("ConfirmForgotPassword", new { userId = userByEmail.Id });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                TempData["Message"] = "Error: Lỗi hệ thống";
                 return View();
             }
-
-            var userByEmail = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (userByEmail == null)
-            {
-                TempData["Message"] = "Error: Email chưa được đăng ký";
-                return View();
-            }
-
-            // Gửi code gửi mail forgot password
-            await SendForgotPasswordCode(email);
-
-            TempData["Message"] = "Success: Mã xác thực đã được gửi qua hòm thư";
-
-            return RedirectToAction("ConfirmForgotPassword", new { userId = userByEmail.Id });
         }
 
         [HttpGet]
         [Route("confirm-forgot-password")]
         public async Task<ActionResult> ConfirmForgotPassword(Guid userId)
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin người dùng";
                 return View();
             }
 
-            ViewData["Email"] = user.Email;
+            var forgotPasswordDTO = new ForgotPasswordDTO
+            {
+                Email = user.Email,
+            };
 
-            return View();
+            return View(forgotPasswordDTO);
         }
-
+        
         [HttpPost]
         [Route("confirm-forgot-password")]
         [ValidateAntiForgeryToken]
@@ -327,26 +273,22 @@ namespace WebPhone.Controllers
                 return View(forgotPasswordDTO);
             }
 
-            if (!VerifyEmail(forgotPasswordDTO.Email, forgotPasswordDTO.Code))
+            if (!_userRepository.VerifyEmail(forgotPasswordDTO.Email, forgotPasswordDTO.Code))
             {
                 TempData["Message"] = "Error: Mã xác thực không đúng hoặc đã hết hạn";
                 return View(forgotPasswordDTO);
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == forgotPasswordDTO.Email);
+            var user = await _userRepository.GetUserByEmailAsync(forgotPasswordDTO.Email);
             if (user == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin người dùng";
                 return View(forgotPasswordDTO);
             }
 
-            user.PasswordHash = PasswordManager.HashPassword(forgotPasswordDTO.Password);
-            user.UpdateAt = DateTime.Now;
+            await _userRepository.ResetPasswordAsync(user, forgotPasswordDTO.Password);
 
-            //_context.Users.Update(user);
-            await _context.SaveChangesAsync();
-
-            TempData["Message"] = "Success: Đổi mật khẩu mới thành công";
+            TempData["Message"] = "Success: Đặt lại mật khẩu mới thành công";
 
             return RedirectToAction(nameof(Login));
         }
@@ -356,15 +298,7 @@ namespace WebPhone.Controllers
         [AppAuthorize]
         public async Task<ActionResult> InfoCustomer()
         {
-            var claimPrincipal = Session["UserClaim"] as ClaimsPrincipal;
-            var email = claimPrincipal.FindFirst(c => c.Type == ClaimTypes.Email).Value;
-            if (email == null)
-            {
-                TempData["Message"] = "Error: Không tìm thấy thông tin";
-                return RedirectToAction("Index", "Home");
-            }
-
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _userRepository.GetUserLoginAsync();
             if (user == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin";
@@ -379,15 +313,7 @@ namespace WebPhone.Controllers
         [AppAuthorize]
         public async Task<ActionResult> ChangePassword()
         {
-            var claimPrincipal = Session["UserClaim"] as ClaimsPrincipal;
-            var email = claimPrincipal.FindFirst(c => c.Type == ClaimTypes.Email).Value;
-            if (email == null)
-            {
-                TempData["Message"] = "Error: Không tìm thấy thông tin";
-                return RedirectToAction("Index", "Home");
-            }
-
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _userRepository.GetUserLoginAsync();
             if (user == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin";
@@ -407,21 +333,20 @@ namespace WebPhone.Controllers
         {
             try
             {
-                var user = await _context.Users.FindAsync(changePasswordDTO.Id);
+                var user = await _userRepository.GetUserByIdAsync(changePasswordDTO.Id);
                 if (user == null)
                 {
                     TempData["Message"] = "Error: Không tìm thấy người dùng";
                     return RedirectToAction(nameof(InfoCustomer));
                 }
 
-                if (!PasswordManager.VerifyPassword(changePasswordDTO.OldPassword, user.PasswordHash))
+                if (!_userRepository.CheckPassword(user, changePasswordDTO.OldPassword))
                 {
                     TempData["Message"] = "Error: Mật khẩu cũ không chính xác";
                     return RedirectToAction(nameof(InfoCustomer));
                 }
 
-                user.PasswordHash = PasswordManager.HashPassword(changePasswordDTO.NewPassword);
-                await _context.SaveChangesAsync();
+                await _userRepository.ResetPasswordAsync(user, changePasswordDTO.NewPassword);
 
                 TempData["Message"] = "Success: Cập nhật mật khẩu thành công";
 
@@ -433,87 +358,6 @@ namespace WebPhone.Controllers
                 TempData["Message"] = "Error: Lỗi hệ thống";
                 return RedirectToAction(nameof(InfoCustomer));
             }
-        }
-
-        private bool CheckLogin() => User.Identity.IsAuthenticated;
-
-        private bool CheckRegexMail(string email)
-        {
-            string pattern = @"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$";
-            Regex regex = new Regex(pattern);
-            if (regex.IsMatch(email)) return true;
-            return false;
-        }
-
-        private async Task SendMailConfirmCode(string email)
-        {
-            var code = RandomGenerator.RandomCode(8);
-            var htmlMessage = $@"<h3>Bạn đã đăng ký tài khoản trên WebPhone</h3>
-                    <p>Tiếp tục đăng ký với WebPhone bằng cách nhập mã bên dưới:</p>
-                    <h1>{code}</h1>
-                    <p>Mã xác minh sẽ hết hạn sau 10 phút.</p>
-                    <p><b>Nếu bạn không yêu cầu mã,</b> bạn có thể bỏ qua tin nhắn này.</p>";
-
-            await _sendMail.SendMailAsync(email, "Xác thực tài khoản", htmlMessage);
-
-            var emailConfirm = new EmailConfirmed
-            {
-                Email = email,
-                Code = code,
-            };
-
-            //var policy = new CacheItemPolicy
-            //{
-            //    AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(10), // Thời gian sống tuyệt đối
-            //    SlidingExpiration = TimeSpan.FromMinutes(5) // Thời gian sống trượt
-            //};
-
-            _cache.Set(email, emailConfirm, DateTimeOffset.Now.AddMinutes(10));
-        }
-
-        private async Task SendForgotPasswordCode(string email)
-        {
-            var code = RandomGenerator.RandomCode(8);
-            var htmlMessage = $@"<h3>Bạn quên mật khẩu tài khoản WebPhone</h3>
-                    <p>Lấy lại mật khẩu WebPhone bằng cách nhập mã bên dưới:</p>
-                    <h1>{code}</h1>
-                    <p>Mã xác minh sẽ hết hạn sau 10 phút.</p>
-                    <p><b>Nếu bạn không yêu cầu mã,</b> bạn có thể bỏ qua tin nhắn này.</p>";
-
-            await _sendMail.SendMailAsync(email, "Quên mật khẩu", htmlMessage);
-
-            var emailConfirm = new EmailConfirmed
-            {
-                Email = email,
-                Code = code,
-            };
-
-            _cache.Set(email, emailConfirm, DateTimeOffset.Now.AddMinutes(10));
-        }
-
-        private bool VerifyEmail(string email, string code)
-        {
-            var emailConfirm = _cache.Get(email) as EmailConfirmed;
-
-            if (emailConfirm == null) return false;
-
-            if (emailConfirm.Email != email) return false;
-
-            if (emailConfirm.Code != code) return false;
-
-            _cache.Remove(email);
-
-            return true;
-        }
-
-        // Dispose để giải phóng tài nguyên
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _context.Dispose(); // Giải phóng DbContext
-            }
-            base.Dispose(disposing);
         }
     }
 }

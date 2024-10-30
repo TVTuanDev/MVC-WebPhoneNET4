@@ -1,0 +1,40 @@
+﻿@model WarehouseDTO
+
+@{
+    ViewData["Title"] = "Cập nhật kho";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<h4>Kho hàng</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form action="@Url.Action("Edit")" method="post">
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.Id)
+            <div class="form-group">
+                @Html.LabelFor(m => m.WarehouseName)
+                @Html.TextBoxFor(m => m.WarehouseName, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.WarehouseName, "", new { @class = "text-danger" })
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.Address)
+                @Html.TextBoxFor(m => m.Address, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.Address, "", new { @class = "text-danger" })
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.Capacity)
+                @Html.TextBoxFor(m => m.Capacity, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.Capacity, "", new { @class = "text-danger" })
+            </div>
+            <div class="form-group mt-3">
+                <input type="submit" value="Lưu" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a href="@Url.Action("Index")">Quay lại</a>
+</div>

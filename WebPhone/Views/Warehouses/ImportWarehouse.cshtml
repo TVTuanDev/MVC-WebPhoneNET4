@@ -1,0 +1,450 @@
+﻿@{
+    ViewData["Title"] = "Nhập hàng";
+    var warehouses = ViewBag.Warehouses as List<Warehouse> ?? new List<Warehouse>();
+    var products = ViewBag.Products as List<Product> ?? new List<Product>();
+}
+
+<h1>Nhập hàng</h1>
+
+<h4>Hóa đơn</h4>
+<hr />
+<div class="row justify-content-between">
+    <div class="col-md-4 mb-3">
+        <form class="search-warehouse-name">
+            <div class="form-group">
+                <button class="btn btn-secondary" type="button" data-bs-toggle="modal" data-bs-target="#createWarehouse">
+                    Thêm kho
+                </button>
+            </div>
+            <div class="form-group mt-3 d-flex position-relative" style="z-index: 1000;">
+                <input class="form-control me-2 search-input" type="search" id="searchWarehouse" placeholder="Tìm kiếm kho..." aria-label="Search" autocomplete="off">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+                <div class="position-absolute bg-white border border-secondary rounded shadow suggestions">
+                    <ul class="list-group">
+                        @foreach (var warehouse in warehouses)
+                        {
+                            <li class="list-group-item"
+                                data-id="@warehouse.Id"
+                                data-name="@warehouse.WarehouseName"
+                                data-address="@warehouse.Address"
+                                data-capacity="@warehouse.Capacity">
+                                @warehouse.WarehouseName
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            <input type="hidden" name="idWarehouse" />
+            <div class="d-flex justify-content-between mt-3">
+                <div>Tên kho: </div>
+                <div class="warehouse-name"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+                <div>Địa chỉ: </div>
+                <div class="warehouse-address"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+                <div>Sức chứa: </div>
+                <div class="warehouse-capacity"></div>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-8">
+        <div style="width: 400px;">
+            <form class="d-flex position-relative search-name" style="z-index: 999;">
+                <input class="form-control me-2 search-input" type="search" id="searchInput" placeholder="Tìm kiếm sản phẩm..." aria-label="Search" autocomplete="off">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+                <div class="position-absolute bg-white border border-secondary rounded shadow suggestions">
+                    <ul class="list-group">
+                        @foreach (var product in products)
+                        {
+                            <li class="list-group-item"
+                                data-id="@product.Id"
+                                @*data-avatar="@product.Avatar"*@
+                                data-price="@product.Price"
+                                data-discount="@product.Discount">
+                                @product.ProductName
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </form>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 50px;" class="text-center">STT</th>
+                    <th scope="col" style="width: 130px;" class="text-center">Ảnh đại diện</th>
+                    <th scope="col">Tên sản phẩm</th>
+                    <th scope="col" style="width: 85px;">Số lượng</th>
+                    <th scope="col" style="width: 160px;">Giá nhập</th>
+                    <th style="width: 55px;" class="text-center">#</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="form-group mt-3 float-end">
+            <button class="btn btn-success" id="importWarehouse">Nhập kho</button>
+        </div>
+    </div>
+</div>
+
+<div>
+    <a href="@Url.Action("Index")">Quay lại</a>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="createWarehouse" tabindex="-1" aria-labelledby="createWarehouseLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createWarehouseLabel">Thêm kho</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create-warehouse">
+                    <div class="form-group">
+                        <label class="control-label">Tên kho</label>
+                        <input class="form-control" type="text" name="WarehouseName" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Địa chỉ</label>
+                        <input class="form-control" type="text" name="Address" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Sức chứa</label>
+                        <input class="form-control" type="text" name="Capacity" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" name="creareWarehouse">Thêm mới</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            const Toast = window.globalVariable;
+            let timeOutSearch;
+            let timeOutSearchWarehouse;
+            let count = 0;
+
+            $('.search-input').on('focus', function () {
+                $(this).parent().find('.suggestions').show();
+            });
+
+            $('.search-input').on('blur', function () {
+                $(this).parent().find('.suggestions').hide();
+            });
+
+            $('#searchInput').on('input', function () {
+                const value = $(this).val().trim();
+
+                if (timeOutSearch) {
+                    clearTimeout(timeOutSearch);
+                }
+
+                timeOutSearch = setTimeout(function () {
+                    $('#searchInput').val(value);
+                    FilterProduct(value);
+                }, 1000);
+            });
+
+            $('form.search-name').on('submit', function (e) {
+                e.preventDefault();
+
+                const value = $(this).find('#searchInput').val().trim();
+
+                if (timeOutSearch) {
+                    clearTimeout(timeOutSearch);
+                }
+
+                FilterProduct(value);
+            });
+
+            $('form.search-name .suggestions').on('mousedown', '.list-group-item', function () {
+                AddProductInTable($(this));
+            });
+
+            $('table.table tbody').on('click', 'button.btn-danger', function () {
+                Swal.fire({
+                    title: "Bạn chắc chứ?",
+                    text: "Thao tác này sẽ không được hoàn lại!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Đồng ý",
+                    cancelButtonText: "Không"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let tbodyEle = $(this).closest('tbody');
+                        let trEle = $(this).closest('tr');
+
+                        trEle.remove();
+
+                        tbodyEle.find('tr').each(function (index) {
+                            $(this).find('th').text(++index);
+                        });
+
+                        count = tbodyEle.find('tr').length;
+                    }
+                });
+            });
+
+            $('table').on('input', 'input.convert-price', function () {
+                let value = $(this).val();
+
+                value = value.replace(/[^0-9]/g, '');
+
+                value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                $(this).val(value);
+            });
+
+            $('#searchWarehouse').on('input', function () {
+                const value = $(this).val().trim();
+
+                if (timeOutSearchWarehouse) {
+                    clearTimeout(timeOutSearchWarehouse);
+                }
+
+                timeOutSearchWarehouse = setTimeout(function () {
+                    $('#searchCustomer').val(value);
+                    FilterWarehouse(value);
+                }, 1000);
+            });
+
+            $('form.search-warehouse-name').on('submit', function (e) {
+                e.preventDefault();
+
+                const value = $(this).find('#searchWarehouse').val().trim();
+
+                if (timeOutSearchWarehouse) {
+                    clearTimeout(timeOutSearchWarehouse);
+                }
+
+                FilterWarehouse(value);
+            });
+
+            $('form.search-warehouse-name .suggestions').on('mousedown', '.list-group-item', function () {
+                AddInfoWarehouse($(this));
+            });
+
+            $('#createWarehouse button[name=creareWarehouse]').click(function () {
+                let formCreateWarehouse = $('#create-warehouse').serialize();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("CreateWarehouse", "Warehouses")',
+                    data: formCreateWarehouse,
+                    success: function (res) {
+                        if (res.success === false) {
+                            Toast.fire({
+                                icon: 'error',
+                                text: `${res.message}`
+                            });
+                            return;
+                        }
+
+                        let warehouse = res.data;
+
+                        let parent = $('form.search-warehouse-name');
+                        let warehouseIdInput = parent.find('input[name=idWarehouse]');
+                        let warehouseNameEle = parent.find('.warehouse-name');
+                        let addressEle = parent.find('.warehouse-address');
+                        let capacityEle = parent.find('.warehouse-capacity');
+
+                        warehouseIdInput.val(warehouse.id);
+                        warehouseNameEle.text(warehouse.warehouseName);
+                        addressEle.text(warehouse.address);
+                        capacityEle.text(warehouse.capacity);
+
+                        $('#createWarehouse').modal('hide');
+                    },
+                    error: function (xhr, status, error) {
+                        // Xử lý lỗi
+                        console.error('Lỗi: ' + error);
+                        console.error('Mã trạng thái: ' + xhr.status);
+                        console.error('Chi tiết lỗi: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            $('#importWarehouse').click(function () {
+                let warehouseId = $('form.search-warehouse-name input[name=idWarehouse]');
+                let listProduct = $('table.table tbody tr');
+                let products = [];
+                if (warehouseId.val() === '' || listProduct.length < 1) {
+                    Toast.fire({
+                        icon: 'error',
+                        text: 'Vui lòng nhập đầy đủ thông tin'
+                    });
+
+                    return;
+                }
+
+                listProduct.each(function () {
+                    let productId = $(this).find('input[name=idProduct]').val();
+                    let quantity = $(this).find('.quantity input').val();
+                    let importPrice = $(this).find('input[name=import]').val().replace(/[^0-9]/g, '');
+                    let product = {
+                        productId,
+                        quantity,
+                        importPrice
+                    };
+
+                    products.push(product);
+                });
+
+                let formData = {
+                    WarehouseId: warehouseId.val(),
+                    ProductImports: products,
+                };
+
+                console.log(formData)
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("ImportWarehouse")',
+                    data: formData,
+                    success: function (res) {
+                        if (res.success === false) {
+                            Toast.fire({
+                                icon: 'error',
+                                text: `${res.message}`
+                            });
+                            return;
+                        }
+
+                        window.location.href = res.data;
+                    },
+                    error: function (xhr, status, error) {
+                        // Xử lý lỗi
+                        console.error('Lỗi: ' + error);
+                        console.error('Mã trạng thái: ' + xhr.status);
+                        console.error('Chi tiết lỗi: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            function FilterProduct(name) {
+                name = name.trim();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("FilterProduct", "Products")',
+                    data: { name },
+                    success: function (res) {
+                        $('form.search-name .suggestions .list-group').empty();
+
+                        $.each(res.data, function (index, product) {
+
+                            var li = `<li
+                                                class="list-group-item"
+                                                data-id="${product.id}"
+                                                data-avatar="${product.avatar}"
+                                                data-price="${product.price}"
+                                                data-discount="${product.discount}"
+                                            >
+                                                ${product.productName}
+                                            </li>`;
+
+                            $('form.search-name .suggestions .list-group').append(li);
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        // Xử lý lỗi
+                        console.error('Lỗi: ' + error);
+                        console.error('Mã trạng thái: ' + xhr.status);
+                        console.error('Chi tiết lỗi: ' + xhr.responseText);
+                    }
+                });
+            }
+
+            function AddProductInTable(product) {
+                let id = product.data('id');
+                let avatar = product.data('avatar');
+                let name = product.text();
+
+                for (let item of $('table.table tbody tr')) {
+                    if (id === $(item).find('input[name=idProduct]').val()) {
+                        let quantityValue = parseInt($(item).find('.quantity input').val());
+                        $(item).find('.quantity input').val(++quantityValue);
+
+                        TotalPrice();
+
+                        return false;
+                    }
+                }
+
+                var tr = `<tr>
+                            <input type="hidden" value="${id}" name="idProduct" />
+                            <th scope="row" class="text-center">${++count}</th>
+                            <td class="text-center">
+                                <img src="https://picsum.photos/100/50?random=${count}" alt="Avatar" style="width:80px; height:auto;" />
+                            </td>
+                            <td>${name}</td>
+                            <td class="quantity">
+                                <input type="number" class="form-control" value="1" min="1" />
+                            </td>
+                            <td class="price-item">
+                                <input type="text" class="form-control text-end convert-price" name="import" />
+                            </td>
+                            <td class="text-center"><button class="btn btn-danger">Xóa</button></td>
+                        </tr>`;
+
+                $('table.table tbody').append(tr);
+            }
+
+            function FilterWarehouse(name) {
+                name = name.trim();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("FilterWarehouseByName", "Warehouses")',
+                    data: { name },
+                    success: function (res) {
+                        $('form.search-warehouse-name .suggestions .list-group').empty();
+
+                        $.each(res.data, function (index, warehouse) {
+
+                            var li = `<li class="list-group-item"
+                                        data-id="${warehouse.id}"
+                                        data-name="${warehouse.warehouseName}"
+                                        data-address="${warehouse.address}"
+                                        data-capacity="${warehouse.capacity}"
+                                    >
+                                        ${warehouse.warehouseName}
+                                    </li>`;
+
+                            $('form.search-warehouse-name .suggestions .list-group').append(li);
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        // Xử lý lỗi
+                        console.error('Lỗi: ' + error);
+                        console.error('Mã trạng thái: ' + xhr.status);
+                        console.error('Chi tiết lỗi: ' + xhr.responseText);
+                    }
+                });
+            }
+
+            function AddInfoWarehouse(element) {
+                let parent = element.closest('.search-warehouse-name');
+                let warehouseIdInput = parent.find('input[name=idWarehouse]');
+                let warehouseNameEle = parent.find('.warehouse-name');
+                let addressEle = parent.find('.warehouse-address');
+                let capacityEle = parent.find('.warehouse-capacity');
+
+                warehouseIdInput.val(element.data('id'));
+                warehouseNameEle.text(element.text());
+                addressEle.text(element.data('address'));
+                capacityEle.text(element.data('capacity'));
+            }
+        });
+    </script>
+}

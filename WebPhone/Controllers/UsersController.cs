@@ -11,6 +11,7 @@ using WebPhone.Models;
 using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
 using WebPhone.Attributes;
+using WebPhone.Repositories;
 
 namespace WebPhone.Controllers
 {
@@ -19,11 +20,14 @@ namespace WebPhone.Controllers
     public class UsersController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly UserRepository _userRepository;
+
         private readonly int ITEM_PER_PAGE = 10;
 
-        public UsersController()
+        public UsersController(UserRepository userRepository)
         {
             _context = new AppDbContext();
+            _userRepository = userRepository;
         }
 
         #region CURD User
@@ -31,38 +35,16 @@ namespace WebPhone.Controllers
         [Route]
         public async Task<ActionResult> Index(string q, int page = 1)
         {
-            var userList = new List<User>();
-            int countPage;
+            q = q == null ? "" : q;
+
+            int total = await _context.Users.Where(u => u.Email.Contains(q)).CountAsync();
+            int countPage = (int)Math.Ceiling((double)total / ITEM_PER_PAGE);
+            countPage = countPage < 1 ? 1 : countPage;
+            page = page > countPage ? countPage : page;
             page = page < 1 ? 1 : page;
 
-            // Có query truyền vào
-            if (!string.IsNullOrEmpty(q))
-            {
-                int total = await _context.Users.Where(u => u.Email.Contains(q)).CountAsync();
-                countPage = (int)Math.Ceiling((double)total / ITEM_PER_PAGE);
-                countPage = countPage < 1 ? 1 : countPage;
-                page = page > countPage ? countPage : page;
-                userList = await _context.Users
-                            .Where(u => u.Email.Contains(q))
-                            .OrderBy(u => u.UserName)
-                            .Skip((page - 1) * ITEM_PER_PAGE)
-                            .Take(ITEM_PER_PAGE)
-                            .Select(u => u).ToListAsync();
-            }
-            else
-            {
-                int total = await _context.Users.CountAsync();
-                countPage = (int)Math.Ceiling((double)total / ITEM_PER_PAGE);
-                countPage = countPage < 1 ? 1 : countPage;
-                page = page > countPage ? countPage : page;
-                userList = await _context.Users
-                            .OrderBy(u => u.UserName)
-                            .Skip((page - 1) * ITEM_PER_PAGE)
-                            .Take(ITEM_PER_PAGE)
-                            .Select(u => u).ToListAsync();
-            }
+            var userList = await _userRepository.GetListUserByEmailAsync(q, page, ITEM_PER_PAGE);
 
-            countPage = countPage < 1 ? 1 : countPage;
             ViewBag.CountPage = countPage;
 
             var roles = await _context.Roles.Select(r => new { r.Id, r.RoleName }).ToListAsync();
@@ -73,9 +55,9 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("details")]
-        public async Task<ActionResult> Details(Guid? id)
+        public async Task<ActionResult> Details(Guid id)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            var user = await _userRepository.GetUserByIdAsync(id);
 
             if (user == null)
             {
@@ -122,8 +104,7 @@ namespace WebPhone.Controllers
                     PasswordHash = PasswordManager.HashPassword(userDTO.Password)
                 };
 
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
+                await _userRepository.CreateAsync(user);
 
                 TempData["Message"] = "Success: Thêm mới tài khoản thành công";
 
@@ -139,9 +120,9 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("edit")]
-        public async Task<ActionResult> Edit(Guid? id)
+        public async Task<ActionResult> Edit(Guid id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userRepository.GetUserByIdAsync(id);
             if (user == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin người dùng";
@@ -166,73 +147,29 @@ namespace WebPhone.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(Guid id, UserDTO userDTO)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (id != userDTO.Id)
-                {
-                    TempData["Message"] = "Error: Thông tin không hợp lệ";
-                    return View(userDTO);
-                }
-
-                if (!ModelState.IsValid)
-                {
-                    TempData["Message"] = "Error: Vui lòng nhập đầy đủ thông tin";
-                    return View(userDTO);
-                }
-
-                var user = await _context.Users.FindAsync(userDTO.Id);
-                if (user == null)
-                {
-                    TempData["Message"] = "Error: Không tìm thấy thông tin người dùng";
-                    return View(userDTO);
-                }
-
-                user.UserName = userDTO.UserName;
-                user.EmailConfirmed = userDTO.EmailConfirmed;
-                user.PhoneNumber = userDTO.PhoneNumber;
-                user.Address = userDTO.Address;
-                user.UpdateAt = DateTime.Now;
-
-                // Có sự thay đổi về email
-                if (user.Email != userDTO.Email)
-                {
-                    // Kiểm tra xem email mới đã được đăng ký chưa
-                    var userByEmail = await _context.Users.FirstOrDefaultAsync(u => u.Email == userDTO.Email);
-                    if (userByEmail != null)
-                    {
-                        TempData["Message"] = "Error: Email đã được sử dụng";
-                        return View(userDTO);
-                    }
-
-                    user.Email = userDTO.Email;
-                }
-
-                // Admin đổi password mới
-                if (userDTO.Password != null)
-                {
-                    user.PasswordHash = PasswordManager.HashPassword(userDTO.Password);
-                }
-
-                await _context.SaveChangesAsync();
-
-                TempData["Message"] = "Success: Cập nhật thông tin thành công";
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                TempData["Message"] = "Error: Lỗi hệ thống";
+                TempData["Message"] = "Error: Vui lòng nhập đầy đủ thông tin";
                 return View(userDTO);
-                throw;
             }
+
+            var result = await _userRepository.UpdateAsync(id, userDTO);
+            if (!result.Succeeded)
+            {
+                TempData["Message"] = $"Error: {result.Message}";
+                return View(userDTO);
+            }
+
+            TempData["Message"] = "Success: Cập nhật thông tin thành công";
+
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
         [Route("delete")]
-        public async Task<ActionResult> Delete(Guid? id)
+        public async Task<ActionResult> Delete(Guid id)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(m => m.Id == id);
+            var user = await _userRepository.GetUserByIdAsync(id);
 
             if (user == null)
             {
@@ -248,7 +185,7 @@ namespace WebPhone.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(Guid id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userRepository.GetUserByIdAsync(id);
             if (user == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin người dùng";
@@ -346,27 +283,39 @@ namespace WebPhone.Controllers
         [Route("filter-name")]
         public async Task<JsonResult> FilterCusomterByName(string name)
         {
-            name = string.IsNullOrEmpty(name) ? "" : name;
-
-            var users = await _context.Users
-                            .Where(u => u.UserName.Contains(name))
-                            .Take(100)
-                            .Select(u => new User
-                            {
-                                Id = u.Id,
-                                UserName = u.UserName,
-                                Email = u.Email,
-                                PhoneNumber = u.PhoneNumber,
-                                Address = u.Address,
-                            })
-                            .ToListAsync();
-
-            return Json(new
+            try
             {
-                Success = true,
-                Message = "Success",
-                Data = users
-            });
+                name = string.IsNullOrEmpty(name) ? "" : name;
+
+                var users = await _context.Users
+                                .Where(u => u.UserName.Contains(name))
+                                .Take(100)
+                                .ToListAsync();
+
+                var listUser = users.Select(u => new User
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    Address = u.Address,
+                }).ToList();
+
+                return Json(new
+                {
+                    Success = true,
+                    Message = "Success",
+                    Data = listUser
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
         }
 
         [HttpPost]
@@ -380,14 +329,14 @@ namespace WebPhone.Controllers
                     Message = "Vui lòng nhập đầy đủ thông tin"
                 });
 
-            if (!CheckRegexMail(customerDTO.Email))
+            if (!_userRepository.CheckRegexMail(customerDTO.Email))
                 return Json(new
                 {
                     Success = false,
                     Message = "Vui lòng nhập đúng định dạng email"
                 });
 
-            if (!CheckRegexPhoneNumber(customerDTO.PhoneNumber))
+            if (!_userRepository.CheckRegexPhoneNumber(customerDTO.PhoneNumber))
                 return Json(new
                 {
                     Success = false,
@@ -421,7 +370,7 @@ namespace WebPhone.Controllers
         [Route("authorize")]
         public async Task<ActionResult> UserAuthorization(Guid id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userRepository.GetUserByIdAsync(id);
             if (user == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin tài khoản";
@@ -458,7 +407,7 @@ namespace WebPhone.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                var user = await _context.Users.FindAsync(userRoleDTO.UserId);
+                var user = await _userRepository.GetUserByIdAsync(userRoleDTO.UserId);
                 if (user == null)
                 {
                     TempData["Message"] = "Error: Không tìm thấy thông tin tài khoản";
@@ -513,22 +462,6 @@ namespace WebPhone.Controllers
                 TempData["Message"] = "Error: Lỗi hệ thống";
                 return RedirectToAction(nameof(Index));
             }
-        }
-
-        private bool CheckRegexMail(string email)
-        {
-            string pattern = @"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$";
-            Regex regex = new Regex(pattern);
-            if (regex.IsMatch(email)) return true;
-            return false;
-        }
-
-        private bool CheckRegexPhoneNumber(string phoneNumber)
-        {
-            string pattern = @"^0[3|5|7|8|9][0-9]{8}$";
-            Regex regex = new Regex(pattern);
-            if (regex.IsMatch(phoneNumber)) return true;
-            return false;
         }
 
         protected override void Dispose(bool disposing)
