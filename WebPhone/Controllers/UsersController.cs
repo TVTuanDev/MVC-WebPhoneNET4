@@ -194,7 +194,7 @@ namespace WebPhone.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(Guid id)
         {
-            var user = await _userRepository.GetUserByIdAsync(id);
+            var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin người dùng";

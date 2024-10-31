@@ -2,6 +2,7 @@
 @{
     ViewBag.Title = "Thanh toán công nợ";
     var customer = ViewData["Customer"] as User ?? new User();
+    var totalDebt = Model.Sum(m => m.Bill.TotalPrice) - Model.Sum(m => m.PaymentTotal);
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -24,6 +25,10 @@
         <div class="d-flex justify-content-between">
             <p>Địa chỉ:</p>
             <p>@customer.Address</p>
+        </div>
+        <div class="d-flex justify-content-between">
+            <p>Tổng nợ:</p>
+            <p>@String.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:C0}", totalDebt)</p>
         </div>
         <form action="@Url.Action("PaymentDebt")" method="post" id="paymentBill">
             @Html.AntiForgeryToken()

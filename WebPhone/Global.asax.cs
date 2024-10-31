@@ -23,6 +23,7 @@ namespace WebPhone
             container.RegisterType<SendMailService>(new HierarchicalLifetimeManager());
             container.RegisterType<UserRepository>(new HierarchicalLifetimeManager());
             container.RegisterType<ProductRepository>(new HierarchicalLifetimeManager());
+            container.RegisterType<BillRepository>(new HierarchicalLifetimeManager());
             // Scoped: HierarchicalLifetimeManager
             // Transient: TransientLifetimeManager
             // Singleton: ContainerControlledLifetimeManager

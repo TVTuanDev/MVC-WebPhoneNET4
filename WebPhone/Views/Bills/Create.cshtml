@@ -372,11 +372,11 @@
                         let phoneNumberEle = parent.find('.customer-phoneNumber');
                         let addressEle = parent.find('.customer-address');
 
-                        customerIdInput.val(customer.id);
-                        userNameEle.text(customer.customerName);
-                        emailEle.text(customer.email);
-                        phoneNumberEle.text(customer.phoneNumber);
-                        addressEle.text(customer.address);
+                        customerIdInput.val(customer.Id);
+                        userNameEle.text(customer.CustomerName);
+                        emailEle.text(customer.Email);
+                        phoneNumberEle.text(customer.PhoneNumber);
+                        addressEle.text(customer.Address);
 
                         $('#createCustomer').modal('hide');
                     },
@@ -397,6 +397,11 @@
                 let discountStyle = $('.radio-discount input#percent').is(':checked') ? 'Percent' : 'Money';
                 let discountValue = parseInt($('input#discount').val().replace(/[^0-9]/g, ''));
                 let paymentValue = parseInt($('input#payment-price').val().replace(/[^0-9]/g, ''));
+
+                discountValue = discountValue == NaN ? 0 : discountValue;
+                paymentValue = paymentValue == NaN ? 0 : paymentValue;
+
+                console.log(discountValue, paymentValue);
 
                 discountValue = discountValue ? discountValue : 0;
 
