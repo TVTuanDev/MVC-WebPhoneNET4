@@ -12,7 +12,7 @@ using WebPhone.Models.Bills;
 
 namespace WebPhone.Repositories
 {
-    public class BillRepository : IDisposable
+    public class BillRepository
     {
         private readonly AppDbContext _context;
         private readonly UserRepository _userRepository;
@@ -190,9 +190,6 @@ namespace WebPhone.Repositories
             }
         }
 
-        public void Dispose()
-        {
-            _context?.Dispose();
-        }
+        ~BillRepository() { _context.Dispose(); }
     }
 }

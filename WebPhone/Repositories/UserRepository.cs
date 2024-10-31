@@ -352,9 +352,6 @@ namespace WebPhone.Repositories
             }
         }
 
-        public void Dispose()
-        {
-            _context?.Dispose();
-        }
+        ~UserRepository() { _context.Dispose(); }
     }
 }

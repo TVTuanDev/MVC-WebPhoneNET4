@@ -13,7 +13,7 @@ using WebPhone.Models.Products;
 
 namespace WebPhone.Repositories
 {
-    public class ProductRepository : IDisposable
+    public class ProductRepository
     {
         private readonly AppDbContext _context;
 
@@ -334,9 +334,6 @@ namespace WebPhone.Repositories
             return new SelectList(items, "Id", "CategoryName");
         }
 
-        public void Dispose()
-        {
-            _context?.Dispose();
-        }
+        ~ProductRepository() { _context.Dispose(); }
     }
 }

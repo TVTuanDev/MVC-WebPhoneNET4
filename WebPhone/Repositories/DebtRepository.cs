@@ -12,7 +12,7 @@ using WebPhone.Models.Debts;
 
 namespace WebPhone.Repositories
 {
-    public class DebtRepository : IDisposable
+    public class DebtRepository
     {
         private readonly AppDbContext _context;
 
@@ -361,10 +361,7 @@ namespace WebPhone.Repositories
                 };
             }
         }
-
-        public void Dispose()
-        {
-            _context.Dispose();
-        }
+        
+        ~DebtRepository() { _context.Dispose(); }
     }
 }
