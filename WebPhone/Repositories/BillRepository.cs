@@ -23,13 +23,13 @@ namespace WebPhone.Repositories
             _userRepository = userRepository;
         }
 
-        public async Task<dynamic> CreateAsync(BillDTO billDTO)
+        public async Task<StatusResult> CreateAsync(BillDTO billDTO)
         {
             try
             {
                 var customer = await _userRepository.GetUserByIdAsync(billDTO.CustomerId);
                 if (customer == null)
-                    return new
+                    return new StatusResult
                     {
                         Succeeded = false,
                         Message = "Không tìm thấy thông tin khách hàng"
@@ -38,14 +38,14 @@ namespace WebPhone.Repositories
                 // Lấy thông tin nhân viên
                 var employment = await _userRepository.GetUserLoginAsync();
                 if (employment == null)
-                    return new
+                    return new StatusResult
                     {
                         Succeeded = false,
                         Message = "Không tìm thấy thông tin nhân viên"
                     };
 
                 if (billDTO.ProductId.Count != billDTO.Quantities.Count)
-                    return new
+                    return new StatusResult
                     {
                         Succeeded = false,
                         Message = "Dữ liệu số lượng sản phẩm không hợp lệ"
@@ -62,7 +62,7 @@ namespace WebPhone.Repositories
                 {
                     var product = await _context.Products.FindAsync(billDTO.ProductId[i]);
                     if (product == null)
-                        return new
+                        return new StatusResult
                         {
                             Succeeded = false,
                             Message = "Không tìm thấy thông tin sản phẩm"
@@ -140,7 +140,7 @@ namespace WebPhone.Repositories
 
                 await _context.SaveChangesAsync();
 
-                return new
+                return new StatusResult
                 {
                     Succeeded = true,
                     Message = "Success",
@@ -150,7 +150,7 @@ namespace WebPhone.Repositories
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return new
+                return new StatusResult
                 {
                     Succeeded = false,
                     Message = "Lỗi hệ thống"
