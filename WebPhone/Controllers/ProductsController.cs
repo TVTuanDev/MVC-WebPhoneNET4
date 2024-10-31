@@ -11,6 +11,7 @@ using System.Web.Mvc;
 using WebPhone.Attributes;
 using WebPhone.EF;
 using WebPhone.Models.Products;
+using WebPhone.Repositories;
 
 namespace WebPhone.Controllers
 {
@@ -19,12 +20,14 @@ namespace WebPhone.Controllers
     public class ProductsController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly ProductRepository _productRepository;
 
         private readonly int ITEM_PER_PAGE = 10;
 
-        public ProductsController()
+        public ProductsController(ProductRepository productRepository)
         {
             _context = new AppDbContext();
+            _productRepository = productRepository;
         }
 
         #region CURD Category Product
@@ -32,21 +35,29 @@ namespace WebPhone.Controllers
         [Route("category")]
         public async Task<ActionResult> CateIndex()
         {
-            var cateProduct = await _context.CategoryProducts.Where(cp => cp.ParentId == null).ToListAsync();
-            await GetCateChildren(cateProduct);
+            try
+            {
+                var cateProduct = await _productRepository.GetListCategoryByParentIdAsync(null);
+                var items = new List<CategoryProduct>();
+                await _productRepository.CreateSelectItem(cateProduct, items, 0);
 
-            var items = new List<CategoryProduct>();
-            CreateSelectItem(cateProduct, items, 0);
+                return View(items);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                TempData["Message"] = "Error: Lỗi hệ thống";
+                return View("Index", "Home");
+            }
 
-            return View(items);
         }
 
         [HttpGet]
         [Route("category/details")]
-        public async Task<ActionResult> CateDetails(Guid? id)
+        public async Task<ActionResult> CateDetails(Guid id)
         {
-            var categoryProduct = await _context.CategoryProducts
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var categoryProduct = await _productRepository.GetCategoryByIdAsync(id);
+
             if (categoryProduct == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin";
@@ -60,7 +71,7 @@ namespace WebPhone.Controllers
         [Route("category/create")]
         public async Task<ActionResult> CateCreate()
         {
-            await RenderCatePoduct();
+            ViewBag.SelectList = await _productRepository.RenderCatePoduct();
 
             return View();
         }
@@ -70,7 +81,7 @@ namespace WebPhone.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> CateCreate([Bind(Include = "CategoryName, ParentId")] CateProductDTO cateProductDTO)
         {
-            await RenderCatePoduct();
+            ViewBag.SelectList = await _productRepository.RenderCatePoduct();
 
             try
             {
@@ -80,14 +91,12 @@ namespace WebPhone.Controllers
                     return View(cateProductDTO);
                 }
 
-                var categoryProduct = new CategoryProduct
+                var result = await _productRepository.CreateCategoryAsync(cateProductDTO);
+                if (!result.Succeeded)
                 {
-                    CategoryName = cateProductDTO.CategoryName,
-                    ParentId = cateProductDTO.ParentId
-                };
-
-                _context.CategoryProducts.Add(categoryProduct);
-                await _context.SaveChangesAsync();
+                    TempData["Message"] = $"Error: {result.Message}";
+                    return View(cateProductDTO);
+                }
 
                 TempData["Message"] = "Success: Tạo danh mục thành công";
 
@@ -95,7 +104,7 @@ namespace WebPhone.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.InnerException?.Message);
+                Console.WriteLine(ex.Message);
                 TempData["Message"] = "Error: Lỗi hệ thống";
                 return RedirectToAction(nameof(CateCreate));
             }
@@ -103,11 +112,11 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("category/edit")]
-        public async Task<ActionResult> CateEdit(Guid? id)
+        public async Task<ActionResult> CateEdit(Guid id)
         {
-            await RenderCatePoduct();
+            ViewBag.SelectList = await _productRepository.RenderCatePoduct();
 
-            var categoryProduct = await _context.CategoryProducts.FindAsync(id);
+            var categoryProduct = await _productRepository.GetCategoryByIdAsync(id);
             if (categoryProduct == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy danh mục sản phẩm";
@@ -129,7 +138,7 @@ namespace WebPhone.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> CateEdit(Guid id, [Bind(Include = "Id,CategoryName, ParentId")] CateProductDTO cateProductDTO)
         {
-            await RenderCatePoduct();
+            ViewBag.SelectList = await _productRepository.RenderCatePoduct();
 
             try
             {
@@ -145,19 +154,12 @@ namespace WebPhone.Controllers
                     return View(cateProductDTO);
                 }
 
-                var categoryProduct = await _context.CategoryProducts.FindAsync(id);
-                if (categoryProduct == null)
+                var result = await _productRepository.EditCategoryAsync(cateProductDTO);
+                if (!result.Succeeded)
                 {
-                    TempData["Message"] = "Error: Không tìm thấy danh mục";
+                    TempData["Message"] = $"Error: {result.Message}";
                     return View(cateProductDTO);
                 }
-
-                categoryProduct.CategoryName = cateProductDTO.CategoryName;
-                categoryProduct.ParentId = cateProductDTO.ParentId;
-                categoryProduct.UpdateAt = DateTime.Now;
-
-                //_context.CategoryProducts.Update(categoryProduct);
-                await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(CateIndex));
             }
@@ -170,10 +172,10 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("category/delete")]
-        public async Task<ActionResult> CateDelete(Guid? id)
+        public async Task<ActionResult> CateDelete(Guid id)
         {
-            var categoryProduct = await _context.CategoryProducts
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var categoryProduct = await _productRepository.GetCategoryByIdAsync(id);
+
             if (categoryProduct == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy thông tin";
@@ -186,35 +188,25 @@ namespace WebPhone.Controllers
         [HttpPost, ActionName("Delete")]
         [Route("category/delete")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> CateDelete(Guid id)
+        public async Task<ActionResult> CateDeleteConfirm(Guid id)
         {
             try
             {
-                var categoryProduct = await _context.CategoryProducts.FindAsync(id);
-                if (categoryProduct == null)
+                var result = await _productRepository.DeleteCategoryAsync(id);
+                if (!result.Succeeded)
                 {
-                    TempData["Message"] = "Error: Không tìm thấy danh mục sản phẩm";
+                    TempData["Message"] = $"Error: {result.Message}";
                     return RedirectToAction(nameof(CateIndex));
                 }
-
-                var cateProductChildren = await _context.CategoryProducts.Where(cp => cp.ParentId == categoryProduct.Id).ToListAsync();
-                if (cateProductChildren.Count > 0)
-                {
-                    TempData["Message"] = "Error: Không thể xóa danh mục có chứa danh mục con";
-                    return RedirectToAction(nameof(CateIndex));
-                }
-
-                _context.CategoryProducts.Remove(categoryProduct);
-
-                await _context.SaveChangesAsync();
 
                 TempData["Message"] = "Success: Xóa danh mục thành công";
                 return RedirectToAction(nameof(CateIndex));
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 TempData["Message"] = "Error: Lỗi hệ thống";
-                return RedirectToAction(nameof(CateDelete));
+                return RedirectToAction(nameof(CateIndex));
             }
         }
         #endregion
@@ -228,26 +220,21 @@ namespace WebPhone.Controllers
             {
                 nameProduct = nameProduct == null ? "" : nameProduct;
 
-                var listProduct = await (from p in _context.Products
-                                         where p.ProductName.Contains(nameProduct)
-                                         orderby p.Price ascending
-                                         select p).ToListAsync();
-
-                var total = listProduct.Count();
-                // Chia ra số trang theo số lượng hiện thị sản phẩm trên mỗi trang
-                var countPage = (int)Math.Ceiling((double)total / ITEM_PER_PAGE);
+                int total = await _context.Products.Where(p => p.ProductName.Contains(nameProduct)).CountAsync();
+                int countPage = (int)Math.Ceiling((double)total / ITEM_PER_PAGE);
                 countPage = countPage < 1 ? 1 : countPage;
-                ViewBag.CountPage = countPage;
-                // Nếu page truyền vào > số trang thì lấy số trang
-                page = page < 1 ? 1 : page;
                 page = page > countPage ? countPage : page;
+                page = page < 1 ? 1 : page;
 
-                listProduct = listProduct.Skip((page - 1) * ITEM_PER_PAGE).Take(ITEM_PER_PAGE).ToList();
+                var listProduct = await _productRepository.GetListProductByNameAsync(nameProduct, page, ITEM_PER_PAGE);
+
+                ViewBag.CountPage = countPage;
 
                 return View(listProduct);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 TempData["Message"] = "Error: Lỗi hệ thống";
                 return RedirectToAction("Index", "Home");
             }
@@ -255,25 +242,10 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("details")]
-        public async Task<ActionResult> Details(Guid? id)
+        public async Task<ActionResult> Details(Guid id)
         {
-            var product = await _context.Products
-                .Include(p => p.CategoryProduct)
-                .Select(p => new Product
-                {
-                    Id = p.Id,
-                    ProductName = p.ProductName,
-                    Description = p.Description,
-                    Price = p.Price,
-                    Discount = p.Discount,
-                    CreateAt = p.CreateAt,
-                    UpdateAt = p.UpdateAt,
-                    CategoryProduct = p.CategoryProduct,
-                }).FirstOrDefaultAsync(m => m.Id == id);
+            var product = await _productRepository.GetProductByIdAsync(id);
 
-            var productS = await _context.Products
-                .Include(p => p.CategoryProduct)
-                .FirstOrDefaultAsync(m => m.Id == id);
             if (product == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy dữ liệu";
@@ -287,7 +259,7 @@ namespace WebPhone.Controllers
         [Route("create")]
         public async Task<ActionResult> Create()
         {
-            await RenderCatePoduct();
+            ViewBag.SelectList = await _productRepository.RenderCatePoduct();
 
             return View();
         }
@@ -297,7 +269,7 @@ namespace WebPhone.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(ProductDTO productDTO)
         {
-            await RenderCatePoduct();
+            ViewBag.SelectList = await _productRepository.RenderCatePoduct();
             try
             {
                 if (!ModelState.IsValid)
@@ -306,17 +278,12 @@ namespace WebPhone.Controllers
                     return View(productDTO);
                 }
 
-                var product = new Product
+                var result = await _productRepository.CreateAsync(productDTO);
+                if(!result.Succeeded)
                 {
-                    ProductName = productDTO.ProductName,
-                    Description = productDTO.Description,
-                    Price = (int)Math.Round((double)productDTO.Price / 1000) * 1000,
-                    Discount = (int)Math.Round((double)(productDTO.Discount ?? 0) / 1000) * 1000,
-                    CategoryId = productDTO.CategoryId
-                };
-
-                _context.Products.Add(product);
-                await _context.SaveChangesAsync();
+                    TempData["Message"] = $"Error: {result.Message}";
+                    return View(productDTO);
+                }
 
                 TempData["Message"] = "Success: Thêm mới sản phẩm thành công";
 
@@ -324,17 +291,7 @@ namespace WebPhone.Controllers
             }
             catch (Exception ex)
             {
-                if (ex.InnerException is SqlException sqlEx)
-                {
-                    // 2601: Cannot insert duplicate key row
-                    // 2627: Violation of UNIQUE KEY constraint
-                    if (sqlEx.Number == 2601 || sqlEx.Number == 2627)
-                    {
-                        TempData["Message"] = "Error: Tên sản phẩm đã được sử dụng";
-                        return View(productDTO);
-                    }
-                }
-
+                Console.WriteLine(ex);
                 TempData["Message"] = "Error: Lỗi hệ thống";
                 return RedirectToAction(nameof(Create));
             }
@@ -342,11 +299,11 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("edit")]
-        public async Task<ActionResult> Edit(Guid? id)
+        public async Task<ActionResult> Edit(Guid id)
         {
-            await RenderCatePoduct();
+            ViewBag.SelectList = await _productRepository.RenderCatePoduct();
 
-            var product = await _context.Products.FindAsync(id);
+            var product = await _productRepository.GetProductByIdAsync(id);
             if (product == null)
             {
                 TempData["Message"] = "Error: Không tìm thấy sản phẩm";
@@ -371,7 +328,7 @@ namespace WebPhone.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(Guid id, ProductDTO productDTO)
         {
-            await RenderCatePoduct();
+            ViewBag.SelectList = await _productRepository.RenderCatePoduct();
 
             try
             {
@@ -387,21 +344,12 @@ namespace WebPhone.Controllers
                     return View(productDTO);
                 }
 
-                var product = await _context.Products.FindAsync(id);
-                if (product == null)
+                var result = await _productRepository.UpdateAsync(productDTO);
+                if (!result.Succeeded)
                 {
-                    TempData["Message"] = "Error: Không tìm thấy sản phẩm";
+                    TempData["Message"] = $"Error: {result.Message}";
                     return View(productDTO);
                 }
-
-                product.ProductName = productDTO.ProductName;
-                product.Description = productDTO.Description;
-                product.Price = productDTO.Price;
-                product.Discount = productDTO.Discount;
-                product.CategoryId = productDTO.CategoryId;
-                product.UpdateAt = DateTime.Now;
-
-                await _context.SaveChangesAsync();
 
                 TempData["Message"] = "Success: Sửa sản phẩm thành công";
 
@@ -409,17 +357,7 @@ namespace WebPhone.Controllers
             }
             catch (Exception ex)
             {
-                if (ex.InnerException is SqlException sqlEx)
-                {
-                    // 2601: Cannot insert duplicate key row
-                    // 2627: Violation of UNIQUE KEY constraint
-                    if (sqlEx.Number == 2601 || sqlEx.Number == 2627)
-                    {
-                        TempData["Message"] = "Error: Tên sản phẩm đã được sử dụng";
-                        return View(productDTO);
-                    }
-                }
-
+                Console.WriteLine(ex.Message);
                 TempData["Message"] = "Error: Lỗi hệ thống";
                 return RedirectToAction(nameof(Create));
             }
@@ -427,10 +365,9 @@ namespace WebPhone.Controllers
 
         [HttpGet]
         [Route("delete")]
-        public async Task<ActionResult> Delete(Guid? id)
+        public async Task<ActionResult> Delete(Guid id)
         {
-            var product = await _context.Products
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var product = await _productRepository.GetProductByIdAsync(id);
 
             if (product == null)
             {
@@ -444,17 +381,14 @@ namespace WebPhone.Controllers
         [HttpPost, ActionName("Delete")]
         [Route("delete")]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Delete(Guid id)
+        public async Task<ActionResult> DeleteConfirm(Guid id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
+            var result = await _productRepository.DeleteAsync(id);
+            if(!result.Succeeded)
             {
-                TempData["Message"] = "Error: Không tìm thấy sản phẩm";
-                return RedirectToAction(nameof(Delete));
+                TempData["Message"] = $"Error: {result.Message}";
+                return View(nameof(Index));
             }
-
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
 
             TempData["Message"] = "Success: Xóa sản phẩm thành công";
 
@@ -575,54 +509,6 @@ namespace WebPhone.Controllers
                     Success = false,
                     Message = ex.Message,
                 });
-            }
-        }
-
-        private async Task RenderCatePoduct()
-        {
-            var cateProduct = await _context.CategoryProducts.Where(cp => cp.ParentId == null).ToListAsync();
-            await GetCateChildren(cateProduct);
-
-            var items = new List<CategoryProduct>();
-            CreateSelectItem(cateProduct, items, 0);
-            var selectList = new SelectList(items, "Id", "CategoryName");
-
-            ViewBag.SelectList = selectList;
-        }
-
-        private async Task GetCateChildren(List<CategoryProduct> categories)
-        {
-            foreach (var category in categories)
-            {
-                // Lấy tất cả category con của category
-                var categoryChildren = await _context.CategoryProducts
-                                        .Include(cp => cp.CateProductChildren)
-                                        .Where(cp => cp.ParentId == category.Id)
-                                        .ToListAsync();
-
-                await GetCateChildren(categoryChildren);
-
-                category.CateProductChildren = categoryChildren;
-            }
-        }
-
-        private void CreateSelectItem(List<CategoryProduct> sourse, List<CategoryProduct> des, int level)
-        {
-            string prefix = string.Concat(Enumerable.Repeat("--", level));
-            foreach (var cateProduct in sourse)
-            {
-                des.Add(new CategoryProduct
-                {
-                    Id = cateProduct.Id,
-                    CategoryName = prefix + " " + cateProduct.CategoryName,
-                    CreateAt = cateProduct.CreateAt,
-                    UpdateAt = cateProduct.UpdateAt,
-                });
-                if (cateProduct.CateProductChildren.Count > 0)
-                {
-                    int levelChild = level + 1;
-                    CreateSelectItem(cateProduct.CateProductChildren.ToList(), des, levelChild);
-                }
             }
         }
 

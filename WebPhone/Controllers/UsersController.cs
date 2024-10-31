@@ -35,22 +35,31 @@ namespace WebPhone.Controllers
         [Route]
         public async Task<ActionResult> Index(string q, int page = 1)
         {
-            q = q == null ? "" : q;
+            try
+            {
+                q = q == null ? "" : q;
 
-            int total = await _context.Users.Where(u => u.Email.Contains(q)).CountAsync();
-            int countPage = (int)Math.Ceiling((double)total / ITEM_PER_PAGE);
-            countPage = countPage < 1 ? 1 : countPage;
-            page = page > countPage ? countPage : page;
-            page = page < 1 ? 1 : page;
+                int total = await _context.Users.Where(u => u.Email.Contains(q)).CountAsync();
+                int countPage = (int)Math.Ceiling((double)total / ITEM_PER_PAGE);
+                countPage = countPage < 1 ? 1 : countPage;
+                page = page > countPage ? countPage : page;
+                page = page < 1 ? 1 : page;
 
-            var userList = await _userRepository.GetListUserByEmailAsync(q, page, ITEM_PER_PAGE);
+                var userList = await _userRepository.GetListUserByEmailAsync(q, page, ITEM_PER_PAGE);
 
-            ViewBag.CountPage = countPage;
+                ViewBag.CountPage = countPage;
 
-            var roles = await _context.Roles.Select(r => new { r.Id, r.RoleName }).ToListAsync();
-            ViewBag.RoleList = new SelectList(roles, "Id", "RoleName");
+                var roles = await _context.Roles.Select(r => new { r.Id, r.RoleName }).ToListAsync();
+                ViewBag.RoleList = new SelectList(roles, "Id", "RoleName");
 
-            return View(userList);
+                return View(userList);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                TempData["Message"] = "Lỗi hệ thống";
+                return View("Index", "Home");
+            }
         }
 
         [HttpGet]

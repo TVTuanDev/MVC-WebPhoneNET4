@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
@@ -8,7 +7,6 @@ using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
-using System.Web.Caching;
 using System.Web.Security;
 using WebPhone.EF;
 using WebPhone.Models;
@@ -109,10 +107,11 @@ namespace WebPhone.Repositories
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 return new StatusResult
                 {
                     Succeeded = false,
-                    Message = ex.Message,
+                    Message = "Lỗi hệ thống",
                 };
             }
         }
@@ -183,10 +182,11 @@ namespace WebPhone.Repositories
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 return new StatusResult
                 {
                     Succeeded = false,
-                    Message = ex.Message
+                    Message = "Lỗi hệ thống"
                 };
             }
         }
@@ -343,10 +343,11 @@ namespace WebPhone.Repositories
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 return new StatusResult
                 {
                     Succeeded = false,
-                    Message = ex.Message,
+                    Message = "Lỗi hệ thống",
                 };
             }
         }

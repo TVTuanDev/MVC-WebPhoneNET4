@@ -22,6 +22,7 @@ namespace WebPhone
             var container = new UnityContainer();
             container.RegisterType<SendMailService>(new HierarchicalLifetimeManager());
             container.RegisterType<UserRepository>(new HierarchicalLifetimeManager());
+            container.RegisterType<ProductRepository>(new HierarchicalLifetimeManager());
             // Scoped: HierarchicalLifetimeManager
             // Transient: TransientLifetimeManager
             // Singleton: ContainerControlledLifetimeManager

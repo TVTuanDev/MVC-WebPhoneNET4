@@ -321,6 +321,7 @@
     <Compile Include="Models\Warehouses\InventoryDTO.cs" />
     <Compile Include="Models\Warehouses\WarehouseDTO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repositories\ProductRepository.cs" />
     <Compile Include="Repositories\UserRepository.cs" />
     <Compile Include="Services\SendMailService.cs" />
   </ItemGroup>
