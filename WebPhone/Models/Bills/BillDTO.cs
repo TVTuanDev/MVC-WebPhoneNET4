@@ -11,8 +11,8 @@ namespace WebPhone.Models.Bills
         public Guid Id { get; set; }
         public Guid CustomerId { get; set; }
         public DiscountStyle DiscountStyle { get; set; }
-        public int DiscountValue { get; set; } = 0;
-        public int PaymentValue { get; set; } = 0;
+        public int DiscountValue { get; set; }
+        public int PaymentValue { get; set; }
         public List<Guid?> ProductId { get; set; } = new List<Guid?>();
         public List<int> Quantities { get; set; } = new List<int>();
     }

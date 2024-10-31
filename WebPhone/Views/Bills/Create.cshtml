@@ -398,12 +398,8 @@
                 let discountValue = parseInt($('input#discount').val().replace(/[^0-9]/g, ''));
                 let paymentValue = parseInt($('input#payment-price').val().replace(/[^0-9]/g, ''));
 
-                discountValue = discountValue == NaN ? 0 : discountValue;
-                paymentValue = paymentValue == NaN ? 0 : paymentValue;
-
-                console.log(discountValue, paymentValue);
-
                 discountValue = discountValue ? discountValue : 0;
+                paymentValue = paymentValue ? paymentValue : 0;
 
                 if (customerId.val() === '' || listProduct.length < 1) {
                     Toast.fire({
