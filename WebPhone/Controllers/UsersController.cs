@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Mvc;
 using WebPhone.EF;
 using WebPhone.Models.Users;
 using WebPhone.Models;
 using Microsoft.Data.SqlClient;
-using System.Text.RegularExpressions;
 using WebPhone.Attributes;
 using WebPhone.Repositories;
 

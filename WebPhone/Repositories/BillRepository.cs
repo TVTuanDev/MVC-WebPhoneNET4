@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
-using System.Linq;
-using System.Reflection;
-using System.Security.Claims;
 using System.Threading.Tasks;
-using System.Web;
 using WebPhone.EF;
 using WebPhone.Models;
 using WebPhone.Models.Bills;

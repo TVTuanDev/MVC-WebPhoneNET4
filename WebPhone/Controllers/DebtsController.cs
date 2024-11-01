@@ -1,10 +1,6 @@
-﻿using MimeKit.Tnef;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Mvc;
 using WebPhone.Attributes;
 using WebPhone.EF;

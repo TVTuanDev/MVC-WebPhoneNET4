@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Data.SqlClient;
-using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Mvc;
 using WebPhone.EF;
 using WebPhone.Models;

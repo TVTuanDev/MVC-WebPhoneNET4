@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Web.Mvc;
-using WebPhone.EF;
-using WebPhone.Models;
 using WebPhone.Models.Accounts;
 using System.Web.Security;
 using WebPhone.Attributes;
@@ -15,10 +13,7 @@ namespace WebPhone.Controllers
     {
         private readonly UserRepository _userRepository;
 
-        public AccountsController
-            (
-                UserRepository userRepository
-            )
+        public AccountsController(UserRepository userRepository)
         {
             _userRepository = userRepository;
         }

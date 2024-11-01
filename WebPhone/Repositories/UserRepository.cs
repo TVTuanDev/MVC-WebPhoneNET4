@@ -16,7 +16,7 @@ using WebPhone.Services;
 
 namespace WebPhone.Repositories
 {
-    public class UserRepository : IDisposable
+    public class UserRepository
     {
         private readonly AppDbContext _context;
         private readonly SendMailService _sendMailService;
